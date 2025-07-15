@@ -1,3 +1,5 @@
+require('dotenv').config(); // env 설정
+
 //ocrAPI
 const express = require("express");
 const cors = require('cors');
@@ -19,3 +21,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
+
+// 좌석 예약 및 취소 라우터 등록
+const reservationRoute = require('./routes/reservationRoute');
+app.use('/', reservationRoute);
