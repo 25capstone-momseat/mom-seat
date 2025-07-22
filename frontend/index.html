@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>맘편한 자리-index.html</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <nav>
+        <button onclick="showSection('login')">로그인</button>
+        <button onclick="showSection('ocr')">임신확인서</button>
+        <button onclick="showSection('train')">열차정보</button>
+        <button onclick="showSection('seat')">좌석예약</button>
+    </nav>
+
+    <div id="content">
+        <!-- 여기에 각 섹션이 동적으로 로드됨 -->
+    </div>
+
+    <!-- 각 기능별 JS 파일 -->
+    <script src="js/auth.js"></script>
+    <script src="js/ocr.js"></script>
+    <script src="js/train.js"></script>
+    <script src="js/seat.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

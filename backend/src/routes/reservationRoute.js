@@ -6,9 +6,9 @@ const { createReservation, cancelReservation } = require('../controllers/reserva
 const auth = require('../middleware/auth');
 
 // POST /reservations
-router.post('/reservations', auth, createReservation);
+router.post('/', auth, createReservation);
 
 // DELETE /reservations/:id
-router.delete('/reservations/:id', auth, cancelReservation);
+router.delete('/:id', auth, cancelReservation);
 
 module.exports = router;

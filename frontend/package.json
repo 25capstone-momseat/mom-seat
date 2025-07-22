@@ -1,0 +1,11 @@
+{
+  "name": "mom-frontend",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "http-proxy-middleware": "^2.0.0"
+  }
+}
