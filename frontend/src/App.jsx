@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';  // ✔ 한 줄로 통합
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; 
 import { AuthProvider } from './contexts/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Login from './pages/Login';
@@ -6,7 +6,9 @@ import SignUp from './pages/SignUp';
 import Home from './pages/Home';
 import OCR from './pages/OCR';
 import SeatReservation from './pages/SeatReservation';
-import Navbar from './components/Navbar'; // ✅ Navbar import 누락되어 있으면 추가
+import ReservationMenu from './pages/ReservationMenu';
+import SeatSearch from './pages/SeatSearch';
+import Navbar from './components/Navbar';
 
 function App() {
   return (
@@ -14,19 +16,23 @@ function App() {
       <Router>
         <Navbar />
         <Routes>
+          {/* 공개 라우트 */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/ocr" element={<OCR />} />
-          <Route
-            path="/seat-reservation"
-            element={
-              <PrivateRoute>
-                <SeatReservation />
-              </PrivateRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" />} /> {/* 잘못된 경로 대응 */}
+          
+          {/* 인증이 필요한 라우트 (PrivateRoute로 보호) */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/ocr" element={<OCR />} />
+            <Route path="/seat-reservation" element={<ReservationMenu />} />
+            <Route path="/seat-reservation/new" element={<SeatReservation />} />
+            <Route path="/seat-reservation/seat-search" element={<SeatSearch />} />
+            <Route path="/seat-reservation/confirm" element={<div>예약 확인 페이지</div>} />
+            <Route path="/seat-reservation/cancel" element={<div>예약 취소 페이지</div>} />
+          </Route>
+          
+          {/* 잘못된 경로는 홈으로 리다이렉트 */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </AuthProvider>
