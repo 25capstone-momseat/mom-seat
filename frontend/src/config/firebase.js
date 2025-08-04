@@ -19,5 +19,11 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-
+export {app};
 export default app;
+
+// export const auth = {
+//   currentUser: null,
+//   signInWithEmailAndPassword: () => Promise.resolve(),
+//   createUserWithEmailAndPassword: () => Promise.resolve(),
+// };
