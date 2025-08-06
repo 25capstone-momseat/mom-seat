@@ -1,0 +1,159 @@
+// frontend/src/components/DebugSubway.jsx - 디버깅용 컴포넌트
+import React, { useEffect } from 'react';
+import { useSubwayContext } from '../contexts/SubwayContext';
+
+const DebugSubway = () => {
+  const {
+    lines,
+    stations,
+    arrivalData,
+    selectedLine,
+    selectedStation,
+    loading,
+    errors,
+    isInitialized,
+    setSelectedLine,
+    setSelectedStation
+  } = useSubwayContext();
+
+  // 상태 변화 로깅
+  useEffect(() => {
+    console.log('[Debug Component] State changed:', {
+      isInitialized,
+      lines: lines.length,
+      stations: stations.length,
+      arrivalData: Object.keys(arrivalData).length,
+      selectedLine,
+      selectedStation,
+      loading,
+      errors
+    });
+  }, [isInitialized, lines, stations, arrivalData, selectedLine, selectedStation, loading, errors]);
+
+  // 수동 API 테스트 함수들
+  const testAPI = async () => {
+    try {
+      console.log('[Debug] API 직접 테스트 시작');
+      
+      // 1. 노선 테스트
+      const response1 = await fetch('http://localhost:5000/api/subway/lines');
+      const lines = await response1.json();
+      console.log('[Debug] 노선 API 응답:', lines);
+      
+      // 2. 역 목록 테스트
+      const response2 = await fetch('http://localhost:5000/api/subway/stations/2호선');
+      const stations = await response2.json();
+      console.log('[Debug] 역 목록 API 응답:', stations);
+      
+      // 3. 도착 정보 테스트
+      const response3 = await fetch('http://localhost:5000/api/subway/arrival/시청');
+      const arrival = await response3.json();
+      console.log('[Debug] 도착 정보 API 응답:', arrival);
+      
+    } catch (error) {
+      console.error('[Debug] API 테스트 오류:', error);
+    }
+  };
+
+  return (
+    <div className="p-4 bg-gray-100 m-4 rounded">
+      <h2 className="text-lg font-bold mb-4">🐛 지하철 API 디버그</h2>
+      
+      {/* 상태 정보 */}
+      <div className="mb-4">
+        <h3 className="font-semibold">📊 현재 상태</h3>
+        <ul className="text-sm">
+          <li>초기화됨: {isInitialized ? '✅' : '❌'}</li>
+          <li>노선 개수: {lines.length}</li>
+          <li>역 개수: {stations.length}</li>
+          <li>도착정보 키: {Object.keys(arrivalData).length}</li>
+          <li>선택된 호선: {selectedLine || '없음'}</li>
+          <li>선택된 역: {selectedStation || '없음'}</li>
+        </ul>
+      </div>
+
+      {/* 로딩 상태 */}
+      <div className="mb-4">
+        <h3 className="font-semibold">⏳ 로딩 상태</h3>
+        <pre className="text-xs bg-white p-2 rounded">
+          {JSON.stringify(loading, null, 2)}
+        </pre>
+      </div>
+
+      {/* 에러 상태 */}
+      {Object.values(errors).some(Boolean) && (
+        <div className="mb-4">
+          <h3 className="font-semibold text-red-600">❌ 에러</h3>
+          <pre className="text-xs bg-red-50 p-2 rounded">
+            {JSON.stringify(errors, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {/* 테스트 버튼들 */}
+      <div className="space-y-2">
+        <button 
+          onClick={testAPI}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          🔍 API 직접 테스트
+        </button>
+        
+        <button 
+          onClick={() => setSelectedLine('2호선')}
+          className="bg-green-500 text-white px-4 py-2 rounded ml-2"
+        >
+          🚇 2호선 선택
+        </button>
+        
+        <button 
+          onClick={() => setSelectedStation('시청')}
+          className="bg-purple-500 text-white px-4 py-2 rounded ml-2"
+          disabled={!selectedLine}
+        >
+          🏛️ 시청역 선택
+        </button>
+      </div>
+
+      {/* 노선 목록 */}
+      {lines.length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold">🚇 노선 목록</h3>
+          <div className="text-xs">
+            {lines.map(line => (
+              <span key={line.id} className="inline-block bg-blue-100 px-2 py-1 rounded mr-2 mb-1">
+                {line.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 역 목록 */}
+      {stations.length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold">🏛️ {selectedLine} 역 목록</h3>
+          <div className="text-xs">
+            {stations.map(station => (
+              <span key={station} className="inline-block bg-green-100 px-2 py-1 rounded mr-2 mb-1">
+                {station}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 도착 정보 */}
+      {Object.keys(arrivalData).length > 0 && (
+        <div className="mt-4">
+          <h3 className="font-semibold">🚊 도착 정보</h3>
+          <pre className="text-xs bg-yellow-50 p-2 rounded overflow-auto max-h-40">
+            {JSON.stringify(arrivalData, null, 2)}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DebugSubway;

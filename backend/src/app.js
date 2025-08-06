@@ -1,19 +1,22 @@
-require('dotenv').config(); // env 설정
-
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') }); // env 설정
 
 const express = require("express");
-const path = require('path');
 const cors = require('cors');
 
 // ocrAPI
 const ocrRouter = require('./routes/ocrRoute'); // OCR 라우터 가져오기
 // reservationAPI
 const reservationRoute = require('./routes/reservationRoute');
+// subwayAPI
+const subwayRoutes = require('./routes/subwayRoute');
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:3000',  // 프론트엔드 주소
-  credentials: true
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],  // 프론트엔드 주소들
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -29,6 +32,9 @@ app.use('/api/ocr', ocrRouter);
 
 // 좌석 예약 및 취소 라우터 연결
 app.use('/api/reservations', reservationRoute);
+
+// 실시간 지하철 조회 라우터 연결
+app.use('/api/subway', subwayRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

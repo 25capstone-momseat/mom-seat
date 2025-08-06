@@ -10,7 +10,7 @@ const ReservationMenu = () => {
   };
 
   const handleReservation = () => {
-    navigate('/seat-reservation/new'); // 좌석 예약 페이지로
+    navigate('/subway'); // SubwayDashboard 페이지로
   };
 
   const handleCancel = () => {

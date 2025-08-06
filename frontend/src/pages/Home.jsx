@@ -20,7 +20,7 @@ const Home = () => {
     {
       title: '좌석\n예약 & 취소',
       icon: Search,
-      route: '/seat-reservation',
+      route: '/reservation',
       description: '임산부 좌석 예약/취소'
     },
     {
