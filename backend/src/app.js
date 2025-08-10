@@ -1,42 +1,64 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') }); // env 설정
+// backend/src/app.js  (충돌 해결본)
 
-const express = require("express");
+const path = require('path');
+// 루트(.env)가 backend/src 상위에 있을 경우 경로 지정
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const express = require('express');
 const cors = require('cors');
 
-// ocrAPI
-const ocrRouter = require('./routes/ocrRoute'); // OCR 라우터 가져오기
-// reservationAPI
+const ocrRouter = require('./routes/ocrRoute');
 const reservationRoute = require('./routes/reservationRoute');
-// subwayAPI
 const subwayRoutes = require('./routes/subwayRoute');
 
 const app = express();
+
+// ✅ PORT는 한 번만 선언 (기본 8000)
+const PORT = process.env.PORT || 8000;
+
+// ✅ CORS: 프론트 여러 포트 허용 + Credentials + 프리플라이트 허용
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],  // 프론트엔드 주소들
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 app.use(express.json());
 
-// // 정적 파일 서빙 - frontend 폴더를 public으로 제공 => cors로 처리
-// app.use(express.static(path.join(__dirname, '../frontend')));
-// // 테스트용 기본 경로
-// app.get("/", function (req, res) {
-//   res.sendFile(path.join(__dirname, '../../frontend/index.html'));
-// });
+// ✅ Health check
+app.get('/', (req, res) => {
+  res.json({
+    message: '서버가 정상 작동 중입니다',
+    port: PORT,
+    timestamp: new Date().toISOString(),
+  });
+});
 
-// OCR 라우터 연결 (이걸 통해 이미지 업로드 처리 가능)
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'API 서버 정상',
+    availableRoutes: ['/api/ocr', '/api/reservations', '/api/subway'],
+  });
+});
+
+// ✅ Routers
 app.use('/api/ocr', ocrRouter);
-
-// 좌석 예약 및 취소 라우터 연결
 app.use('/api/reservations', reservationRoute);
-
-// 실시간 지하철 조회 라우터 연결
 app.use('/api/subway', subwayRoutes);
 
-const PORT = process.env.PORT || 5000;
+// ✅ 404 (경로 없는 미들웨어)
+app.use((req, res) => {
+  res.status(404).json({
+    error: '요청한 경로를 찾을 수 없습니다',
+    requestedPath: req.originalUrl,
+    method: req.method,
+  });
+});
+
 app.listen(PORT, () => {
+  console.log('=================================');
   console.log(`서버 실행 중: http://localhost:${PORT}`);
+  console.log(`OCR API:   http://localhost:${PORT}/api/ocr/upload`);
+  console.log('=================================');
 });
