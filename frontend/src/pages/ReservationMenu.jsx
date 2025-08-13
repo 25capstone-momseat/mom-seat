@@ -14,7 +14,7 @@ const ReservationMenu = () => {
   };
 
   const handleCancel = () => {
-    navigate('/seat-reservation/cancel'); // 예약 취소 페이지로
+    navigate('/reservation-history'); // 예약 내역 페이지로 (취소 기능 포함)
   };
 
   return (

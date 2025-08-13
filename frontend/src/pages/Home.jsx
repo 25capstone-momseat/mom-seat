@@ -26,7 +26,7 @@ const Home = () => {
     {
       title: '좌석 이용 내역',
       icon: CheckSquare,
-      route: '/usage-history',
+      route: '/reservation-history',
       description: '나의 좌석 이용 기록'
     },
     {

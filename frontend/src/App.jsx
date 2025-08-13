@@ -56,6 +56,7 @@ import OCR from './pages/OCR';
 import ReservationMenu from './pages/ReservationMenu';
 import SeatReservation from './pages/SeatReservation';
 import SeatSearch from './pages/SeatSearch';
+import ReservationHistory from './pages/ReservationHistory';
 
 
 
@@ -75,7 +76,8 @@ function App() {
               <Route path="/ocr" element={<OCR />} />
               <Route path="/reservation" element={<ReservationMenu />} />
               <Route path="/reservation/seats" element={<SeatReservation />} />
-              <Route path="/search" element={<SeatSearch />} />
+              <Route path="/reservation-history" element={<ReservationHistory />} />
+              <Route path="/seat-search" element={<SeatSearch />} />
             </Routes>
           </main>
         </div>
