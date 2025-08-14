@@ -1,6 +1,5 @@
-// API 호출 함수들
 // frontend/src/services/subwayService.js
-import { apiRequest } from './apiClient';
+import api from '../config/api'; // 올바른 api 인스턴스 import
 
 /**
  * 지하철 관련 API 서비스 함수들
@@ -28,7 +27,7 @@ export const subwayService = {
         url += `?lineNumber=${encodeURIComponent(lineNumber)}`;
       }
 
-      const response = await apiRequest.get(url);
+      const response = await api.get(url); // api 인스턴스 사용
       
       if (!response.data.success) {
         throw new Error(response.data.message || '도착 정보를 가져올 수 없습니다.');
@@ -54,7 +53,7 @@ export const subwayService = {
    */
   async getSubwayLines() {
     try {
-      const response = await apiRequest.get('/subway/lines');
+      const response = await api.get('/subway/lines'); // api 인스턴스 사용
       
       if (!response.data.success) {
         throw new Error(response.data.message || '노선 정보를 가져올 수 없습니다.');
@@ -83,7 +82,7 @@ export const subwayService = {
       }
 
       const encodedLineNumber = encodeURIComponent(lineNumber);
-      const response = await apiRequest.get(`/subway/stations/${encodedLineNumber}`);
+      const response = await api.get(`/subway/stations/${encodedLineNumber}`); // api 인스턴스 사용
       
       if (!response.data.success) {
         throw new Error(response.data.message || '역 목록을 가져올 수 없습니다.');
@@ -112,7 +111,7 @@ export const subwayService = {
         throw new Error('열차번호를 입력해주세요.');
       }
 
-      const response = await apiRequest.get(`/subway/train/${trainNumber}/seats`);
+      const response = await api.get(`/subway/train/${trainNumber}/seats`); // api 인스턴스 사용
       
       if (!response.data.success) {
         throw new Error(response.data.message || '좌석 정보를 가져올 수 없습니다.');
@@ -136,7 +135,7 @@ export const subwayService = {
    */
   async healthCheck() {
     try {
-      const response = await apiRequest.get('/subway/health');
+      const response = await api.get('/subway/health'); // api 인스턴스 사용
       return response.data;
     } catch (error) {
       console.error('[지하철 API 헬스체크 오류]', error);

@@ -1,15 +1,21 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../config/serviceAccountKey.json');
+const serviceAccount = require('./serviceAccountKey.json');
 
-// Firebase Admin SDK 초기화
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: 'momcomfortseat.appspot.com' // Storage 쓸 경우만 필요
-});
+// Initialize only once
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    // Add this only if you actually use Storage; otherwise you can remove it.
+    storageBucket: 'momcomfortseat.appspot.com',
+  });
+}
 
-const db = admin.firestore(); //firebase 인스턴스
+// Reuse these singletons everywhere
+const db = admin.firestore();
+// const bucket = admin.storage().bucket(); // uncomment if you need Storage
 
 module.exports = {
   admin,
-  db, // 이걸 사용해서 Firestore에 접근
+  db,
+  // bucket,
 };

@@ -1,359 +1,374 @@
+// frontend/src/pages/SignUp.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithPhoneNumber, 
-  RecaptchaVerifier 
+import { Link, useNavigate } from "react-router-dom";
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  EmailAuthProvider,
+  linkWithCredential,
+  updateProfile,
+  fetchSignInMethodsForEmail,
 } from "firebase/auth";
 import { auth } from "../config/firebase";
+import api from "../config/api";
 
-function SignUp() {
-  // 1. 모든 상태를 React state로 관리
+const PHONE_REGEX = /^\+82[1-9][0-9]{8,9}$/; // +8210XXXXXXXX
+
+const formatMMSS = (s) =>
+  `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+export default function SignUp() {
+  // --- form state
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
     phone: "",
-    otp: ""
+    otp: "",
   });
 
-  // 2. 인증 관련 상태들
-  const [authState, setAuthState] = useState({
-    otpSent: false,           // 인증번호 전송 여부
-    confirmationResult: null, // Firebase에서 반환하는 확인 객체
-    isLoading: false,         // 로딩 상태
-    recaptchaVerifier: null   // reCAPTCHA 검증기
+  // --- ui / validation
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    otp: "",
+    global: "",
   });
 
+  // email duplication check state (중복 확인)
+  const [emailCheck, setEmailCheck] = useState({
+    checked: false,
+    available: false,
+    checking: false,
+    message: "",
+  });
+
+  // otp / recaptcha state
+  const [otpState, setOtpState] = useState({
+    sent: false,
+    confirmationResult: null,
+    recaptcha: null,
+  });
+  const [timeLeft, setTimeLeft] = useState(0); // seconds
+
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // 3. 컴포넌트가 언마운트될 때 reCAPTCHA 정리
+  // countdown timer
+  useEffect(() => {
+    if (!otpState.sent || timeLeft <= 0) return;
+    const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [otpState.sent, timeLeft]);
+
+  // cleanup reCAPTCHA
   useEffect(() => {
     return () => {
-      if (authState.recaptchaVerifier) {
-        authState.recaptchaVerifier.clear();
-      }
+      if (otpState.recaptcha) otpState.recaptcha.clear();
     };
-  }, [authState.recaptchaVerifier]);
+  }, [otpState.recaptcha]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.id]: e.target.value });
+  const updateField = (e) => {
+    const { id, value } = e.target;
+    setForm((f) => ({ ...f, [id]: value }));
+    // clear field error on change
+    setErrors((er) => ({ ...er, [id]: "", global: "" }));
+    if (id === "email") setEmailCheck({ checked: false, available: false, checking: false, message: "" });
   };
 
-  // 4. 전화번호 형식 검증 함수
-  const validatePhoneNumber = (phone) => {
-    // 한국 전화번호 형식: +82로 시작하고 10-11자리 숫자
-    const phoneRegex = /^\+82[1-9][0-9]{8,9}$/;
-    return phoneRegex.test(phone);
+  // quick client validations to render inline messages
+  const validateClient = () => {
+    const er = {};
+    if (!form.name.trim()) er.name = "이름을 입력해주세요.";
+    if (!form.email.trim()) er.email = "이메일을 입력해주세요.";
+    if (!form.password) er.password = "비밀번호를 입력해주세요.";
+    if (form.password && form.password.length < 6) er.password = "비밀번호는 6자리 이상 입력해주세요.";
+    if (!form.confirmPassword) er.confirmPassword = "비밀번호 확인을 입력해주세요.";
+    if (form.password && form.confirmPassword && form.password !== form.confirmPassword)
+      er.confirmPassword = "비밀번호가 일치하지 않습니다.";
+    if (!form.phone.trim()) er.phone = "휴대폰 번호를 입력해주세요.";
+    if (form.phone && !PHONE_REGEX.test(form.phone)) er.phone = "+8210XXXXXXXX 형식으로 입력해주세요.";
+    if (otpState.sent && !form.otp.trim()) er.otp = "인증번호를 입력해주세요.";
+    setErrors((prev) => ({ ...prev, ...er }));
+    return er;
   };
 
-  // 5. 인증번호 전송 함수
+  // 이메일 중복 확인 (fetchSignInMethodsForEmail)
+  const checkEmail = async () => {
+    if (!form.email.trim()) {
+      setErrors((er) => ({ ...er, email: "이메일을 입력해주세요." }));
+      return;
+    }
+    setEmailCheck((s) => ({ ...s, checking: true, message: "" }));
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth, form.email);
+      const available = methods.length === 0;
+      setEmailCheck({ checked: true, available, checking: false, message: available ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다." });
+      if (!available) setErrors((er) => ({ ...er, email: "이미 사용 중인 이메일입니다." }));
+    } catch (e) {
+      setEmailCheck({ checked: false, available: false, checking: false, message: "이메일 확인 중 오류가 발생했습니다." });
+      setErrors((er) => ({ ...er, email: e.message || "이메일 확인 실패" }));
+    }
+  };
+
+  // OTP 전송
   const sendOTP = async () => {
-    if (!form.phone) {
-      alert("휴대폰 번호를 입력하세요.");
+    // validate phone only (UX: others can be empty here)
+    if (!form.phone.trim()) {
+      setErrors((er) => ({ ...er, phone: "휴대폰 번호를 입력해주세요." }));
       return;
     }
-
-    if (!validatePhoneNumber(form.phone)) {
-      alert("휴대폰 번호를 +8210xxxxxxxx 형식으로 입력하세요.");
+    if (!PHONE_REGEX.test(form.phone)) {
+      setErrors((er) => ({ ...er, phone: "+8210XXXXXXXX 형식으로 입력해주세요." }));
       return;
     }
-
-    // 로딩 시작
-    setAuthState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      // 기존 reCAPTCHA 정리
-      if (authState.recaptchaVerifier) {
-        authState.recaptchaVerifier.clear();
-      }
-
-      // 새로운 reCAPTCHA 생성
-      const recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+      if (otpState.recaptcha) otpState.recaptcha.clear();
+      const recaptcha = new RecaptchaVerifier(auth, "recaptcha-container", {
         size: "invisible",
-        callback: (response) => {
-          console.log("reCAPTCHA 해결됨:", response);
-        },
-        'expired-callback': () => {
-          console.log("reCAPTCHA 만료됨");
-          setAuthState(prev => ({ 
-            ...prev, 
-            recaptchaVerifier: null 
-          }));
-        }
+        callback: () => {},
+        "expired-callback": () => {},
       });
-
-      // Firebase 전화번호 인증 요청
-      const confirmationResult = await signInWithPhoneNumber(
-        auth, 
-        form.phone, 
-        recaptchaVerifier
-      );
-      
-      // 성공적으로 인증번호가 전송되면 상태 업데이트
-      setAuthState(prev => ({
-        ...prev,
-        confirmationResult: confirmationResult,
-        recaptchaVerifier: recaptchaVerifier,
-        otpSent: true,
-        isLoading: false
-      }));
-
-      alert("인증번호가 전송되었습니다.");
-      
-    } catch (error) {
-      console.error("인증 요청 실패:", error);
-      
-      // 구체적인 오류 메시지 제공
-      let errorMessage = "인증 요청 실패: ";
-      switch (error.code) {
-        case 'auth/invalid-phone-number':
-          errorMessage += "올바르지 않은 전화번호 형식입니다.";
-          break;
-        case 'auth/too-many-requests':
-          errorMessage += "너무 많은 요청이 있었습니다. 나중에 다시 시도해주세요.";
-          break;
-        case 'auth/quota-exceeded':
-          errorMessage += "일일 SMS 할당량을 초과했습니다.";
-          break;
-        default:
-          errorMessage += error.message;
-      }
-      
-      alert(errorMessage);
-      
-      // 실패 시 reCAPTCHA 정리 및 상태 초기화
-      if (authState.recaptchaVerifier) {
-        authState.recaptchaVerifier.clear();
-      }
-      
-      setAuthState(prev => ({
-        ...prev,
-        recaptchaVerifier: null,
-        isLoading: false
-      }));
+      const confirmationResult = await signInWithPhoneNumber(auth, form.phone, recaptcha);
+      setOtpState({ sent: true, confirmationResult, recaptcha });
+      setTimeLeft(180); // 3분
+    } catch (e) {
+      let msg = "인증 요청 실패";
+      if (e?.code === "auth/too-many-requests") msg = "요청이 너무 많습니다. 잠시 후 다시 시도하세요.";
+      else if (e?.code === "auth/quota-exceeded") msg = "일일 SMS 할당량을 초과했습니다.";
+      else if (e?.code === "auth/invalid-phone-number") msg = "올바르지 않은 전화번호 형식입니다.";
+      setErrors((er) => ({ ...er, phone: msg }));
     }
   };
 
-  // 6. 회원가입 처리 함수
+  const resendOTP = async () => {
+    setForm((f) => ({ ...f, otp: "" }));
+    setOtpState((s) => ({ ...s, sent: false, confirmationResult: null }));
+    await sendOTP();
+  };
+
+  // SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 필수 필드 검증
-    if (!form.name || !form.email || !form.password || !form.confirmPassword || !form.phone || !form.otp) {
-      alert("모든 필드를 입력해주세요.");
-      return;
-    }
+    // client-side
+    const er = validateClient();
+    if (Object.keys(er).length) return;
 
-    // 비밀번호 확인
-    if (form.password !== form.confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.");
-      return;
-    }
-    
-    // 전화번호 인증 확인
-    if (!authState.confirmationResult) {
-      alert("먼저 휴대폰 인증을 완료해주세요.");
-      return;
-    }
-
-    setAuthState(prev => ({ ...prev, isLoading: true }));
-
-    try {
-      // 7. 인증번호 확인
-      const phoneAuthResult = await authState.confirmationResult.confirm(form.otp);
-      console.log("전화번호 인증 성공:", phoneAuthResult.user);
-
-      // 8. 이메일로 회원가입 (전화번호 인증된 사용자)
-      const emailAuthResult = await createUserWithEmailAndPassword(
-        auth, 
-        form.email, 
-        form.password
-      );
-      
-      console.log("이메일 회원가입 성공:", emailAuthResult.user);
-      
-      alert("회원가입이 완료되었습니다!");
-      navigate("/login");
-      
-    } catch (error) {
-      console.error("회원가입 실패:", error);
-      
-      let errorMessage = "회원가입 실패: ";
-      switch (error.code) {
-        case 'auth/invalid-verification-code':
-          errorMessage += "인증번호가 올바르지 않습니다.";
-          break;
-        case 'auth/code-expired':
-          errorMessage += "인증번호가 만료되었습니다. 다시 요청해주세요.";
-          // 만료된 경우 상태 초기화
-          setAuthState(prev => ({
-            ...prev,
-            otpSent: false,
-            confirmationResult: null
-          }));
-          setForm(prev => ({ ...prev, otp: "" }));
-          break;
-        case 'auth/email-already-in-use':
-          errorMessage += "이미 사용 중인 이메일입니다.";
-          break;
-        case 'auth/weak-password':
-          errorMessage += "비밀번호가 너무 약합니다. 6자리 이상 입력해주세요.";
-          break;
-        default:
-          errorMessage += error.message;
+    // if user didn't press "중복 확인", auto-check on submit
+    if (!emailCheck.checked) {
+      const methods = await fetchSignInMethodsForEmail(auth, form.email);
+      if (methods.length > 0) {
+        setEmailCheck({ checked: true, available: false, checking: false, message: "이미 사용 중인 이메일입니다." });
+        setErrors((prev) => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
+        return;
       }
-      
-      alert(errorMessage);
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
     }
-  };
 
-  // 9. 인증번호 재전송 함수
-  const resendOTP = () => {
-    setAuthState(prev => ({
-      ...prev,
-      otpSent: false,
-      confirmationResult: null
-    }));
-    setForm(prev => ({ ...prev, otp: "" }));
+    if (!otpState.sent) {
+      setErrors((prev) => ({ ...prev, phone: "먼저 인증번호를 요청해주세요." }));
+      return;
+    }
+    if (timeLeft <= 0) {
+      setErrors((prev) => ({ ...prev, otp: "인증번호가 만료되었습니다. 재전송해주세요." }));
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // A) OTP 확인 => 현재 유저는 '전화번호'로 로그인된 상태
+      const { user: phoneUser } = await otpState.confirmationResult.confirm(form.otp);
+
+      // B) 같은 계정에 이메일/비번 링크
+      const cred = EmailAuthProvider.credential(form.email, form.password);
+      await linkWithCredential(phoneUser, cred);
+
+      // C) displayName 세팅 (즉시 인사)
+      await updateProfile(phoneUser, { displayName: form.name });
+
+      // D) 프로필을 Firestore에 저장 (백엔드)
+      try {
+        await api.post("/profile", { name: form.name, email: phoneUser.email || form.email });
+      } catch {
+        // not fatal for greeting
+      }
+
+      navigate("/"); // 홈으로 이동 (AuthContext가 “안녕하세요, {이름}님!” 표시)
+    } catch (e) {
+      console.error(e);
+      if (e?.code === "auth/invalid-verification-code") {
+        setErrors((prev) => ({ ...prev, otp: "인증번호가 올바르지 않습니다." }));
+      } else if (e?.code === "auth/code-expired") {
+        setErrors((prev) => ({ ...prev, otp: "인증번호가 만료되었습니다. 재전송해주세요." }));
+        setTimeLeft(0);
+      } else if (e?.code === "auth/email-already-in-use") {
+        setErrors((prev) => ({ ...prev, email: "이미 사용 중인 이메일입니다." }));
+      } else if (e?.code === "auth/credential-already-in-use") {
+        setErrors((prev) => ({ ...prev, email: "해당 이메일이 이미 다른 계정에 연결되어 있습니다." }));
+      } else {
+        setErrors((prev) => ({ ...prev, global: e.message || "회원가입에 실패했습니다." }));
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="container">
-      <h2>회원 가입</h2>
-      <form onSubmit={handleSubmit}>
-        <input 
-          id="name" 
-          value={form.name} 
-          onChange={handleChange} 
-          placeholder="이름" 
-          disabled={authState.isLoading}
-          required
-        />
-        
-        <input 
-          id="email" 
-          type="email"
-          value={form.email} 
-          onChange={handleChange} 
-          placeholder="이메일" 
-          disabled={authState.isLoading}
-          required
-        />
-        
-        <input 
-          id="password" 
-          type="password" 
-          value={form.password} 
-          onChange={handleChange} 
-          placeholder="비밀번호 (6자리 이상)" 
-          disabled={authState.isLoading}
-          minLength="6"
-          required
-        />
-        
-        <input 
-          id="confirmPassword" 
-          type="password" 
-          value={form.confirmPassword} 
-          onChange={handleChange} 
-          placeholder="비밀번호 확인" 
-          disabled={authState.isLoading}
-          required
-        />
+    <div className="mx-auto max-w-sm px-4 py-6">
+      <h2 className="text-xl font-semibold mb-4">회원 가입</h2>
 
-        {/* 전화번호 입력 및 인증 요청 */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
-          <input 
-            id="phone" 
-            value={form.phone} 
-            onChange={handleChange} 
-            placeholder="휴대폰 번호 (+82101234567형식)" 
-            style={{ flex: 1 }} 
-            disabled={authState.isLoading || authState.otpSent}
+      {/* global error */}
+      {errors.global && <p className="mb-3 text-sm text-red-500">{errors.global}</p>}
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {/* 이름 */}
+        <div>
+          <input
+            id="name"
+            value={form.name}
+            onChange={updateField}
+            placeholder="이름"
+            className="w-full rounded-xl bg-pink-50 px-4 py-3 outline-none"
             required
           />
-          <button 
-            type="button" 
-            onClick={sendOTP} 
-            disabled={authState.isLoading || authState.otpSent}
-            style={{ 
-              flex: "0 0 100px", 
-              backgroundColor: authState.otpSent ? "#4CAF50" : "#2196F3",
-              color: "white",
-              border: "none",
-              padding: "8px",
-              borderRadius: "4px",
-              cursor: (authState.isLoading || authState.otpSent) ? "not-allowed" : "pointer"
-            }}
+          {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
+        </div>
+
+        {/* 이메일 + 중복 확인 */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={updateField}
+              placeholder="이메일"
+              className="w-full rounded-xl bg-pink-50 px-4 py-3 outline-none"
+              required
+            />
+            {(errors.email || emailCheck.message) && (
+              <p className={`mt-1 text-xs ${emailCheck.available ? "text-green-600" : "text-red-500"}`}>
+                {errors.email || emailCheck.message}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={checkEmail}
+            disabled={emailCheck.checking || !form.email}
+            className="shrink-0 rounded-xl px-3 py-2 text-sm text-white"
+            style={{ background: "#E9A7B9" }}
           >
-            {authState.isLoading ? "전송중..." : (authState.otpSent ? "전송완료" : "인증요청")}
+            {emailCheck.checking ? "확인중..." : "중복 확인"}
           </button>
         </div>
 
-        {/* 인증번호 입력 (인증번호가 전송되었을 때만 표시) */}
-        {authState.otpSent && (
-          <div style={{ marginBottom: "16px" }}>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <input 
-                id="otp" 
-                value={form.otp} 
-                onChange={handleChange} 
-                placeholder="인증번호 6자리 입력" 
-                style={{ flex: 1 }}
-                disabled={authState.isLoading}
-                maxLength="6"
+        {/* 비밀번호 */}
+        <div>
+          <input
+            id="password"
+            type="password"
+            value={form.password}
+            onChange={updateField}
+            placeholder="비밀번호"
+            className="w-full rounded-xl bg-pink-50 px-4 py-3 outline-none"
+            required
+            minLength={6}
+          />
+          <p className="mt-1 text-[11px] text-gray-400">6자리 이상으로 입력해주세요.</p>
+          {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+        </div>
+
+        {/* 비밀번호 확인 */}
+        <div>
+          <input
+            id="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={updateField}
+            placeholder="비밀번호 확인"
+            className="w-full rounded-xl bg-pink-50 px-4 py-3 outline-none"
+            required
+          />
+          {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>}
+        </div>
+
+        {/* 휴대폰 번호 + 인증요청 */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <input
+              id="phone"
+              value={form.phone}
+              onChange={updateField}
+              placeholder="휴대폰 번호 (+8210XXXXXXXX)"
+              className="w-full rounded-xl bg-pink-50 px-4 py-3 outline-none"
+              required
+            />
+            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+          </div>
+          <button
+            type="button"
+            onClick={sendOTP}
+            disabled={otpState.sent && timeLeft > 0}
+            className="shrink-0 rounded-xl px-3 py-2 text-sm text-white"
+            style={{ background: otpState.sent && timeLeft > 0 ? "#9CA3AF" : "#E9A7B9" }}
+          >
+            {otpState.sent && timeLeft > 0 ? "전송완료" : "인증요청"}
+          </button>
+        </div>
+
+        {/* 인증번호 + 남은 시간 + 재전송 */}
+        {otpState.sent && (
+          <div>
+            <div className="flex items-center gap-2">
+              <input
+                id="otp"
+                value={form.otp}
+                onChange={updateField}
+                placeholder="인증번호 입력"
+                className="flex-1 rounded-xl bg-pink-50 px-4 py-3 outline-none"
+                maxLength={6}
                 required
               />
-              <button 
-                type="button" 
+              <span className="text-xs text-gray-400 w-16 text-right">
+                남은 시간 {formatMMSS(Math.max(timeLeft, 0))}
+              </span>
+              <button
+                type="button"
                 onClick={resendOTP}
-                disabled={authState.isLoading}
-                style={{ 
-                  flex: "0 0 80px",
-                  backgroundColor: "#FF9800",
-                  color: "white",
-                  border: "none",
-                  padding: "8px",
-                  borderRadius: "4px",
-                  fontSize: "14px"
-                }}
+                disabled={timeLeft > 0}
+                className="shrink-0 rounded-xl px-3 py-2 text-sm text-white"
+                style={{ background: timeLeft > 0 ? "#9CA3AF" : "#E9A7B9" }}
               >
                 재전송
               </button>
             </div>
+            {errors.otp && <p className="mt-1 text-xs text-red-500">{errors.otp}</p>}
           </div>
         )}
 
-        <button 
-          type="submit" 
-          disabled={authState.isLoading || !authState.otpSent}
-          style={{
-            width: "100%",
-            padding: "12px",
-            backgroundColor: (authState.isLoading || !authState.otpSent) ? "#ccc" : "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            fontSize: "16px",
-            cursor: (authState.isLoading || !authState.otpSent) ? "not-allowed" : "pointer"
-          }}
+        {/* submit */}
+        <button
+          type="submit"
+          disabled={submitting || !otpState.sent}
+          className="mt-2 w-full rounded-xl py-3 text-white text-base"
+          style={{ background: submitting || !otpState.sent ? "#E5E7EB" : "#E9A7B9" }}
         >
-          {authState.isLoading ? "처리중..." : "회원가입하기"}
+          {submitting ? "처리중..." : "회원가입하기"}
         </button>
       </form>
-      
-      <div className="sub-actions" style={{ marginTop: "16px", textAlign: "center" }}>
-        <Link to="/login">로그인으로 돌아가기</Link>
+
+      <div className="mt-4 text-center text-sm">
+        <Link to="/login" className="text-gray-500 underline">로그인으로 돌아가기</Link>
       </div>
 
-      {/* reCAPTCHA 컨테이너 */}
+      {/* Invisible reCAPTCHA anchor */}
       <div id="recaptcha-container"></div>
     </div>
   );
 }
-
-export default SignUp;

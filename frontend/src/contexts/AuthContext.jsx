@@ -1,60 +1,71 @@
-// import { createContext, useContext, useState, useEffect } from 'react';
-// import { onAuthStateChanged } from 'firebase/auth';
-// import { auth } from '../config/firebase';
+// frontend/src/contexts/AuthContext.jsx
+import { createContext, useContext, useEffect, useState } from 'react';
+import { onAuthStateChanged, updateProfile } from 'firebase/auth';
+import { auth } from '../config/firebase';
+import api from '../config/api';
 
-// const AuthContext = createContext();
+const AuthContext = createContext({
+  user: null,
+  name: '',
+  loading: true,
+  setDisplayName: async (_n) => {},
+});
 
-// export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
 
-// export const AuthProvider = ({ children }) => {
-//   const [currentUser, setCurrentUser] = useState(null);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const unsubscribe = onAuthStateChanged(auth, (user) => {
-//       setCurrentUser(user);
-//       setLoading(false);
-//     });
-
-//     return unsubscribe;
-//   }, []);
-
-//   const value = {
-//     currentUser,
-//     loading
-//   };
-
-//   return (
-//     <AuthContext.Provider value={value}>
-//       {!loading && children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-
-import { createContext, useContext, useEffect, useState } from "react";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { app } from "../config/firebase"; // initializeApp 한 객체
-
-const AuthContext = createContext();
-
-export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const auth = getAuth(app); // 반드시 app 넣어줘야 함 ✅
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u);
+      if (!u) {
+        setName('');
+        setLoading(false);
+        return;
+      }
 
-    return () => unsubscribe();
-  }, [auth]);
+      const dn = (u.displayName || '').trim();
+      if (dn) {
+        setName(dn);
+        setLoading(false);
+        return;
+      }
+
+      // fallback to backend profile
+      try {
+        const { data } = await api.get('/profile/me');
+        setName((data && data.name) || '');
+      } catch {
+        setName('');
+      } finally {
+        setLoading(false);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // helper to update both Auth + Firestore
+  const setDisplayName = async (newName) => {
+    if (!user) return;
+    await updateProfile(user, { displayName: newName });
+    try {
+      await api.post('/profile', { name: newName, email: user.email || '' });
+    } catch {
+      // ignore backend failure for greeting
+    }
+    setName(newName);
+  };
 
   return (
-    <AuthContext.Provider value={{ currentUser }}>
+    <AuthContext.Provider value={{ user, name, loading, setDisplayName }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+// Export both ways so either `import AuthProvider ...` or `import { AuthProvider } ...` works
+export { AuthProvider };
+export default AuthProvider;

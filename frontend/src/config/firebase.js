@@ -26,6 +26,7 @@ auth.languageCode = "ko";
 export {app, auth};
 export default app;
 
+
 // export const auth = {
 //   currentUser: null,
 //   signInWithEmailAndPassword: () => Promise.resolve(),

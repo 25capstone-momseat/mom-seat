@@ -14,6 +14,10 @@ import SeatReservation from './pages/SeatReservation';
 import SeatSearch from './pages/SeatSearch';
 import ReservationHistory from './pages/ReservationHistory';
 
+import Profile from './pages/Profile';
+import ChangePassword from './pages/ChangePassword';
+import ResetPassword from './pages/ResetPassword';
+
 function App() {
   return (
     <AppProvider>
@@ -22,7 +26,6 @@ function App() {
           <Navbar />
           <main className="main-content">
             <Routes>
-              {/* 공개 라우트 */}
               <Route path="/" element={<Home />} />
               <Route path="/subway" element={<SubwayDashboard />} />
               <Route path="/login" element={<Login />} />
@@ -36,7 +39,10 @@ function App() {
               <Route path="/seat-search" element={<SeatSearch />} />
               <Route path="/search" element={<SeatSearch />} />
 
-              {/* 잘못된 경로 리다이렉트 */}
+              {/* 내 정보 관리 */}
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/password" element={<ChangePassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} /> 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
