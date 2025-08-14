@@ -1,322 +1,290 @@
-// frontend/src/pages/OCR.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Upload, FileText, X, CheckCircle } from 'lucide-react';
-import api from '../config/api';
+import { FileText, Upload, CheckCircle, X } from 'lucide-react';
+import api, { apiUpload } from '../config/api';
 
 export default function OCR() {
-  const [selectedFile, setSelectedFile]   = useState(null);
-  const [preview, setPreview]             = useState(null);
-  const [isProcessing, setIsProcessing]   = useState(false);
-  const [result, setResult]               = useState(null); // {success, fields, text, usedPath} | {success:false, error}
-  const [captureMode, setCaptureMode]     = useState(false);
+  const navigate = useNavigate();
 
-  const fileInputRef = useRef(null);
-  const videoRef     = useRef(null);
-  const canvasRef    = useRef(null);
-  const streamRef    = useRef(null);
-  const navigate     = useNavigate();
+  // 파일/미리보기
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
 
-  // ========== 파일/카메라 ==========
-  const handleFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSelectedFile(file);
-    const fr = new FileReader();
-    fr.onload = (ev) => setPreview(ev.target.result);
-    fr.readAsDataURL(file);
-    setCaptureMode(false);
+  // 처리 상태
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+
+  // OCR 결과 & 수정 폼
+  const [result, setResult] = useState(null); // { usedUrl, raw, fields:{name,hospital,issueDate,dueDate} }
+  const [form, setForm] = useState({ name: '', hospital: '', issueDate: '', dueDate: '' });
+  const [saved, setSaved] = useState(false);
+
+  const inputRef = useRef(null);
+
+  const onPick = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setSaved(false);
+    setError('');
+    const r = new FileReader();
+    r.onload = () => setPreview(r.result);
+    r.readAsDataURL(f);
   };
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }, audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
-      setCaptureMode(true);
-      setPreview(null);
-      setSelectedFile(null);
-    } catch {
-      alert('카메라에 접근할 수 없습니다. 브라우저 권한을 확인해주세요.');
-    }
-  };
-
-  const stopCamera = () => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
-    setCaptureMode(false);
-  };
-
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width  = video.videoWidth  || 1080;
-    canvas.height = video.videoHeight || 1440;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], 'certificate.jpg', { type: 'image/jpeg' });
-      setSelectedFile(file);
-      setPreview(canvas.toDataURL('image/jpeg'));
-      stopCamera();
-    }, 'image/jpeg', 0.9);
-  };
-
-  useEffect(() => () => stopCamera(), []); // 언마운트 시 카메라 정리
-
-  const removeFile = () => {
-    setSelectedFile(null);
+  const resetAll = () => {
+    setFile(null);
     setPreview(null);
     setResult(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    setForm({ name: '', hospital: '', issueDate: '', dueDate: '' });
+    setSaved(false);
+    setError('');
+    if (inputRef.current) inputRef.current.value = '';
   };
 
-  // ========== OCR 업로드 & 저장 ==========
-  // 서버 라우트와 필드명 차이를 흡수: /ocr/upload 또는 /ocr/parse + (image|file)
-  async function uploadToOCR(file) {
-    const tries = [
-      { path: '/ocr/upload', field: 'image' }, // 권장 조합
-      { path: '/ocr/upload', field: 'file'  },
-      { path: '/ocr/parse',  field: 'image' },
-      { path: '/ocr/parse',  field: 'file'  },
-    ];
-    for (const t of tries) {
-      try {
-        const fd = new FormData();
-        fd.append(t.field, file);
-        const { data } = await api.post(t.path, fd, { timeout: 60000 });
-        // 응답 표준화
-        const fields = data?.fields || {};
-        const normalized = {
-          name:      fields.name      ?? data?.name      ?? '',
-          hospital:  fields.hospital  ?? data?.hospital  ?? '',
-          issueDate: fields.issueDate ?? data?.issueDate ?? data?.date ?? '',
-          dueDate:   fields.dueDate   ?? data?.dueDate   ?? '',
-          text:      data?.raw        ?? data?.text      ?? data?.ocrText ?? '',
-          usedPath:  t.path,
-        };
-        return { ok: true, ...normalized };
-      } catch {
-        // 다음 후보 시도
-      }
-    }
-    return { ok: false, error: 'OCR API에 연결할 수 없습니다. 백엔드 라우트(/api/ocr/upload 또는 /api/ocr/parse)를 확인하세요.' };
-  }
+  /** ---- 보정 유틸: OCR가 20254 같은 걸 내놔도 2025로 정리 ---- */
+  const normalizeDate = (raw = '') => {
+    if (!raw) return '';
+    const nums = (raw.replace(/[^\d]/g, ' ').match(/\d{1,5}/g) || []).slice(0, 3);
+    if (nums.length < 3) return '';
+    let [y, m, d] = nums;
+    if (y.length > 4) y = y.slice(0, 4);
+    return `${y.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  };
 
-  async function saveCertificate({ name, hospital, issueDate, dueDate }) {
-    await api.post('/certificate', {
-      name: name || '',
-      hospital: hospital || '',
-      issueDate: issueDate || '',
-      dueDate: dueDate || '',
-    });
-  }
+  /** ---- raw 텍스트에서 자동 추출(이름/병원/임신확인일/분만예정일) ---- */
+  const extractFromRaw = (raw = '') => {
+    const t = raw.replace(/\r/g, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+    const pick = (re) => (re.exec(t)?.[1] || '').trim();
 
-  const processOCR = async () => {
-    if (!selectedFile) return;
+    const name =
+      pick(/(?:산모명|성명|이름)\s*[:：]?\s*([가-힣]{2,6})/) || '';
+
+    const issueRaw =
+      pick(/(?:임신\s*확인일|임신확인일|발급일자|작성일|작성일자)\s*[:：]?\s*([0-9\s.\-년월일]+)/i);
+
+    const dueRaw =
+      pick(/(?:분만\s*예정일|분만예정일|출산예정일|예정일|EDD)\s*[:：]?\s*([0-9\s.\-년월일]+)/i);
+
+    const hospMatches = [...t.matchAll(/([가-힣A-Za-z·\s]{2,25}(?:여성병원|산부인과|병원|의원|의료원))/g)];
+    const hospital =
+      hospMatches.sort((a, b) => (b[1]?.length || 0) - (a[1]?.length || 0))[0]?.[1]?.trim() || '';
+
+    return {
+      name,
+      hospital,
+      issueDate: normalizeDate(issueRaw),
+      dueDate: normalizeDate(dueRaw),
+    };
+  };
+
+  /** ---- OCR 실행 ---- */
+  const runOCR = async () => {
+    if (!file) return;
     setIsProcessing(true);
-    setResult(null);
-
+    setError('');
+    setSaved(false);
     try {
-      const r = await uploadToOCR(selectedFile);
-      if (!r.ok) throw new Error(r.error || 'OCR 처리 실패');
+      const { data } = await apiUpload('/ocr/upload', file); // fieldName 기본 'file'
+      console.log('[OCR 응답]', data);
 
-      // 화면에도 간단 표시
+      // 1) 서버 표준 응답 우선
+      const container = data?.fields || data?.result || data;
+      let fields = {
+        name: container?.name || '',
+        hospital: container?.hospital || '',
+        issueDate: container?.issueDate || container?.date || '',
+        dueDate: container?.dueDate || '',
+      };
+
+      // 2) 누락 시 raw 텍스트에서 보정 추출
+      const rawText = data?.raw || data?.ocrText || data?.text || '';
+      if (!fields.name || !fields.hospital || !fields.issueDate || !fields.dueDate) {
+        const auto = extractFromRaw(rawText);
+        fields = {
+          name: fields.name || auto.name,
+          hospital: fields.hospital || auto.hospital,
+          issueDate: fields.issueDate || auto.issueDate,
+          dueDate: fields.dueDate || auto.dueDate,
+        };
+      }
+
       setResult({
-        success: true,
-        fields: {
-          patientName: r.name || '인식되지 않음',
-          hospitalName: r.hospital || '인식되지 않음',
-          issueDate: r.issueDate || '인식되지 않음',
-          dueDate: r.dueDate || '인식되지 않음',
-        },
-        text: r.text,
-        usedPath: r.usedPath,
+        usedUrl:
+          data?.usedUrl ||
+          `${import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL}/ocr/upload`,
+        raw: rawText,
+        fields,
       });
-
-      // DB 저장 → 홈으로 이동(홈에서 자동 팝업)
-      await saveCertificate({ name: r.name, hospital: r.hospital, issueDate: r.issueDate, dueDate: r.dueDate });
-      localStorage.setItem('certJustUpdated', '1');
-      navigate('/');
+      setForm(fields); // ✅ 입력칸 자동 채움
     } catch (e) {
-      setResult({ success: false, error: e.message || 'OCR 중 오류가 발생했습니다.' });
+      setError(e.userMessage || e.message || 'OCR 처리 중 오류가 발생했습니다.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // ========== UI ==========
+  const saveCertificate = async () => {
+    setError('');
+    try {
+      await api.post('/certificate', {
+        name: form.name?.trim(),
+        hospital: form.hospital?.trim(),
+        issueDate: form.issueDate?.trim(),
+        dueDate: form.dueDate?.trim(),
+      });
+      setSaved(true);
+      localStorage.setItem('certJustUpdated', '1');
+    } catch (e) {
+      setError(e.userMessage || e.message || '저장 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-sm border">
-        {/* 헤더 */}
-        <div className="border-b p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <FileText className="w-6 h-6 text-gray-600" />
-            <h1 className="text-lg font-semibold text-gray-900">임신확인서 OCR</h1>
-          </div>
-          <p className="text-sm text-gray-600">촬영/업로드 후 OCR 처리하면 자동으로 저장되고, 홈에서 바로 확인할 수 있어요.</p>
+    <div className="min-h-screen bg-rose-50">
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <FileText className="w-6 h-6 text-gray-700" />
+          <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: '#7D6073' }}>
+            임신확인서 업로드
+          </h1>
         </div>
+        <p className="text-sm text-gray-700 mb-5">임신확인서를 촬영하거나 업로드하여 OCR 처리하세요.</p>
 
-        <div className="p-6">
-          {/* 카메라 모드 */}
-          {captureMode && (
-            <div className="mb-6">
-              <div className="relative border rounded-lg overflow-hidden">
-                <video ref={videoRef} autoPlay playsInline className="w-full" />
-                <canvas ref={canvasRef} className="hidden" />
-              </div>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={capturePhoto}
-                  className="flex-1 bg-gray-900 text-white py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Camera className="w-4 h-4" />
-                  촬영하기
-                </button>
-                <button
-                  onClick={stopCamera}
-                  className="px-4 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
+        {!preview && !result && (
+          <div className="space-y-3">
+            <button
+              onClick={() => inputRef.current?.click()}
+              className="w-full border-2 border-dashed border-gray-300 rounded-xl py-10 hover:border-gray-400 hover:bg-white transition-colors flex flex-col items-center"
+            >
+              <Upload className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-gray-700">파일 선택하기</span>
+            </button>
+            <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
+          </div>
+        )}
 
-          {/* 업로드 옵션 (카메라 X + 미리보기 X) */}
-          {!captureMode && !preview && (
-            <div className="space-y-3">
+        {preview && !result && (
+          <div className="space-y-4">
+            <div className="relative border rounded-xl overflow-hidden">
+              <img src={preview} alt="미리보기" className="w-full" />
               <button
-                onClick={startCamera}
-                className="w-full border-2 border-dashed border-gray-300 rounded-lg py-8 px-6 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                onClick={resetAll}
+                className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full p-2 shadow"
+                title="다시 선택"
               >
-                <Camera className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                <div className="text-sm font-medium text-gray-700">카메라로 촬영하기</div>
+                <X className="w-4 h-4" />
               </button>
-              <p></p>
+            </div>
+            <div className="flex gap-2">
               <button
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-300 rounded-lg py-8 px-6 hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                onClick={runOCR}
+                disabled={isProcessing}
+                className="flex-1 rounded-xl py-3 text-white disabled:opacity-50"
+                style={{ background: '#E9A7B9' }}
               >
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                <div className="text-sm font-medium text-gray-700">파일 선택하기</div>
+                {isProcessing ? '처리 중...' : 'OCR 처리하기'}
+              </button>
+              <button onClick={resetAll} className="px-4 rounded-xl border">
+                다시 선택
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isProcessing && <div className="mt-8 text-sm text-gray-600">이미지를 분석하고 있습니다…</div>}
+
+        {error && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-6 space-y-5">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <h2 className="text-xl font-bold">OCR 처리 완료</h2>
+            </div>
+
+            <div className="text-xs text-gray-500">사용된 API: {result.usedUrl}</div>
+
+            <div className="rounded-xl border bg-white p-4 space-y-3">
+              <div>
+                <label className="text-sm text-gray-600">산모명</label>
+                <input
+                  className="mt-1 w-full rounded-lg border p-2"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="예: 김OO"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">의료기관</label>
+                <input
+                  className="mt-1 w-full rounded-lg border p-2"
+                  value={form.hospital}
+                  onChange={(e) => setForm({ ...form, hospital: e.target.value })}
+                  placeholder="예: ㅇㅇ산부인과"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm text-gray-600">임신 확인일</label>
+                  <input
+                    className="mt-1 w-full rounded-lg border p-2"
+                    value={form.issueDate}
+                    onChange={(e) => setForm({ ...form, issueDate: e.target.value })}
+                    placeholder="YYYY-MM-DD"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">분만 예정일</label>
+                  <input
+                    className="mt-1 w-full rounded-lg border p-2"
+                    value={form.dueDate}
+                    onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                    placeholder="YYYY-MM-DD"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {!!result.raw && (
+              <div className="rounded-xl border bg-white p-4">
+                <h3 className="font-semibold mb-2">인식된 전체 텍스트:</h3>
+                <div className="text-xs text-gray-700 whitespace-pre-wrap max-h-48 overflow-auto">
+                  {result.raw}
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={saveCertificate}
+                disabled={isProcessing}
+                className="rounded-xl px-4 py-3 text-white disabled:opacity-50"
+                style={{ background: '#E9A7B9' }}
+              >
+                {saved ? '다시 저장하기' : '저장하기'}
               </button>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-
-              <p className="text-xs text-gray-500 text-center mt-4">JPG, PNG (최대 10MB)</p>
-            </div>
-          )}
-
-          {/* 미리보기 (결과 아직 없음) */}
-          {preview && !result && (
-            <div>
-              <div className="relative border rounded-lg overflow-hidden mb-4">
-                <img src={preview} alt="미리보기" className="w-full" />
-                <button
-                  onClick={removeFile}
-                  className="absolute top-2 right-2 bg-white/80 hover:bg-white text-gray-600 rounded-full p-1 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <button
-                  onClick={processOCR}
-                  disabled={isProcessing}
-                  className="w-full bg-gray-900 text-white py-3 px-4 rounded-md font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isProcessing ? '처리 중...' : 'OCR 처리하기'}
-                </button>
-                <button
-                  onClick={removeFile}
-                  className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-md font-medium hover:bg-gray-50 transition-colors"
-                >
-                  다시 선택하기
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 처리 중 */}
-          {isProcessing && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-gray-900 mx-auto mb-4" />
-              <p className="text-sm text-gray-600">임신확인서를 분석하고 있습니다...</p>
-              <p className="text-xs text-gray-500 mt-2">최초 처리 시 시간이 걸릴 수 있습니다</p>
-            </div>
-          )}
-
-          {/* 결과 (에러 또는 성공 직후 안내) */}
-          {result && (
-            <div>
-              {result.success ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <h3 className="font-medium text-green-800">OCR 처리 완료 — 저장 후 홈으로 이동합니다.</h3>
-                  </div>
-                  {result.usedPath && (
-                    <div className="text-xs text-green-600 mb-2">사용한 엔드포인트: {result.usedPath}</div>
-                  )}
-                  <div className="space-y-2 text-sm">
-                    <Row label="산모이름" value={result.fields.patientName} />
-                    <Row label="병원" value={result.fields.hospitalName} />
-                    <Row label="발급일자" value={result.fields.issueDate} />
-                    <Row label="예정일" value={result.fields.dueDate} />
-                  </div>
-                  {result.text && (
-                    <div className="mt-4 pt-3 border-t border-green-200">
-                      <h4 className="text-xs font-medium text-green-700 mb-2">인식된 전체 텍스트</h4>
-                      <div className="text-xs text-gray-600 bg-white p-2 rounded border max-h-24 overflow-y-auto whitespace-pre-wrap">
-                        {result.text}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <X className="w-5 h-5 text-red-600" />
-                    <h3 className="font-medium text-red-800">처리 실패</h3>
-                  </div>
-                  <p className="text-sm text-red-700 whitespace-pre-wrap">
-                    {result.error || 'OCR 중 오류가 발생했습니다.'}
-                  </p>
-                </div>
-              )}
-
               <button
-                onClick={removeFile}
-                className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-md font-medium hover:bg-gray-50 transition-colors"
+                onClick={() => (saved ? navigate('/') : alert('먼저 저장을 완료해주세요.'))}
+                className="rounded-xl px-4 py-3 border"
               >
+                홈으로 이동
+              </button>
+
+              <button onClick={resetAll} className="rounded-xl px-4 py-3 border">
                 새 문서 업로드하기
               </button>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function Row({ label, value }) {
-  return (
-    <div className="flex justify-between py-1 text-sm">
-      <span className="text-gray-600">{label}</span>
-      <span className="font-medium">{value || '-'}</span>
+            {saved && <p className="text-sm text-green-600">저장되었습니다. 홈 화면에서 확인할 수 있어요.</p>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
