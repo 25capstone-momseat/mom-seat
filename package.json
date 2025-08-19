@@ -12,9 +12,10 @@
   },
   "scripts": {
     "start": "node backend/src/app.js",
-    "dev": "nodemon backend/src/app.js"
+    "dev": "concurrently \"nodemon backend/src/app.js\" \"npm run dev --prefix frontend\""
   },
   "devDependencies": {
+    "concurrently": "^9.2.0",
     "nodemon": "^3.1.10"
   }
 }
