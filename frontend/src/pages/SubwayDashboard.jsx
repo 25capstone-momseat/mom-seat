@@ -1,7 +1,7 @@
-// frontend/src/pages/SubwayDashboard.jsx
 import React from 'react';
 import { ChevronRight, MapPin, Clock, RefreshCw } from 'lucide-react';
 import { useSubwayApp } from '../hooks/useSubwayUtils';
+import SeatMap from '../components/SeatMap'; // SeatMap 컴포넌트 임포트
 
 const SubwayDashboard = () => {
   const { 
@@ -180,98 +180,33 @@ const SubwayDashboard = () => {
             </div>
           </div>
 
-          {seat.isLoading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 mx-auto" style={{borderColor: '#C599B6'}}></div>
-              <p className="text-sm text-gray-500 mt-2">좌석 정보를 불러오는 중...</p>
-            </div>
-          ) : seat.error ? (
-            <div className="text-center py-4">
-              <p className="text-sm text-red-500">{seat.error}</p>
-            </div>
-          ) : seat.hasData ? (
-            <>
-              <div className="rounded-lg p-3 mb-4" style={{backgroundColor: 'rgba(197, 153, 182, 0.1)'}}>
-                <div className="flex justify-between text-sm">
-                  <span>총 좌석: <strong>{seat.totalSeats}</strong></span>
-                  <span>사용 중: <strong>{seat.occupancyInfo.occupiedCount}</strong></span>
-                  <span>사용가능한 좌석: <strong>{seat.availableSeats}</strong></span>
-                </div>
-                <div className="mt-2 text-center">
-                  <span className="text-xs text-gray-600">
-                    점유율: <strong style={{color: '#C599B6'}}>{seat.occupancyInfo.rate}%</strong>
-                  </span>
-                </div>
-              </div>
+          {/* SeatMap 컴포넌트가 실시간 좌석 정보를 모두 처리합니다. */}
+          <SeatMap />
 
-              {/* 좌석 배치도 */}
-              <div className="space-y-2 mb-6">
-                {seat.seatRows.map((row, rowIndex) => (
-                  <div key={rowIndex} className="flex justify-center space-x-1">
-                    {row.map((seatItem) => (
-                      <div 
-                        key={seatItem.number} 
-                        className="w-10 h-10 rounded flex items-center justify-center text-xs font-medium transition-colors"
-                        style={{
-                          backgroundColor: 
-                            seatItem.status === 'occupied' ? '#7D6073' : 
-                            seatItem.status === 'reserved' ? '#C599B6' : '#e5e7eb',
-                          color: seatItem.status === 'available' ? '#6b7280' : 'white',
-                          cursor: seatItem.isSelectable ? 'pointer' : 'default'
-                        }}
-                        title={`좌석 ${seatItem.number} - ${
-                          seatItem.status === 'occupied' ? '사용중' :
-                          seatItem.status === 'reserved' ? '예약됨' : '사용가능'
-                        }`}
-                      >
-                        {seatItem.number}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-
-              {/* 범례 */}
-              <div className="flex justify-center space-x-4 text-xs mb-6">
-                <div className="flex items-center space-x-1">
-                  <div className="w-4 h-4 bg-gray-200 rounded"></div>
-                  <span>예약 가능</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-4 h-4 rounded" style={{backgroundColor: '#C599B6'}}></div>
-                  <span>예약된 좌석</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-4 h-4 rounded" style={{backgroundColor: '#7D6073'}}></div>
-                  <span>사용중인 좌석</span>
-                </div>
-              </div>
-
-              {/* 즐겨찾기 토글 버튼 */}
-              <div className="flex space-x-2 mb-4">
-                <button
-                  onClick={favorites.toggleCurrentFavorite}
-                  className="flex-1 py-2 px-4 rounded-lg border transition-colors text-sm"
-                  style={{
-                    borderColor: '#C599B6',
-                    backgroundColor: favorites.isCurrentStationFavorite ? '#C599B6' : 'white',
-                    color: favorites.isCurrentStationFavorite ? 'white' : '#C599B6'
-                  }}
-                >
-                  {favorites.isCurrentStationFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-                </button>
-              </div>
-
-              {/* 예약하기 버튼 */}
-              <button 
-                className="w-full text-white py-3 rounded-lg font-medium transition-colors hover:opacity-90"
-                style={{backgroundColor: '#C599B6'}}
-                disabled={seat.availableSeats === 0}
+          {/* 즐겨찾기 및 예약 버튼 등 추가 UI는 여기에 유지할 수 있습니다. */}
+          <div className="mt-6">
+            <div className="flex space-x-2 mb-4">
+              <button
+                onClick={favorites.toggleCurrentFavorite}
+                className="flex-1 py-2 px-4 rounded-lg border transition-colors text-sm"
+                style={{
+                  borderColor: '#C599B6',
+                  backgroundColor: favorites.isCurrentStationFavorite ? '#C599B6' : 'white',
+                  color: favorites.isCurrentStationFavorite ? 'white' : '#C599B6'
+                }}
               >
-                {seat.availableSeats === 0 ? '예약 가능한 좌석이 없습니다' : '좌석 예약하기'}
+                {favorites.isCurrentStationFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               </button>
-            </>
-          ) : null}
+            </div>
+
+            <button 
+              className="w-full text-white py-3 rounded-lg font-medium transition-colors hover:opacity-90"
+              style={{backgroundColor: '#C599B6'}}
+              // disabled={seat.availableSeats === 0} // 이 로직은 SeatMap 내부나 상위 상태에서 다시 관리해야 합니다.
+            >
+              좌석 예약하기
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -45,6 +45,7 @@ if (process.env.NODE_ENV !== 'production') {
 const ocrRouter = require('./routes/ocrRoute');
 const reservationRoute = require('./routes/reservationRoute');
 const subwayRoutes = require('./routes/subwayRoute');
+const seatRoute = require('./routes/seatRoute'); // 좌석 라우트 추가
 
 
 // 인증 관련 라우터 추가 (필요시)
@@ -93,6 +94,7 @@ app.get('/health', (req, res) => {
 app.use('/api/ocr', ocrRouter);
 app.use('/api/reservations', reservationRoute);
 app.use('/api/subway', subwayRoutes);
+app.use('/api/seats', seatRoute); // 좌석 라우트 등록
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/certificate', require('./routes/certificate'));
 app.use('/api/profile', require('./routes/profile'));
@@ -137,10 +139,19 @@ app.use((err, req, res, next) => {
 // =============================================
 // 7. 서버 시작 (모든 설정 완료 후)
 // =============================================
+const http = require('http');
+const { setupWebSocket } = require('./utils/websocket');
+
+const server = http.createServer(app);
+
+// 웹소켓 서버 설정
+setupWebSocket(server);
+
 if (require.main === module) {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log('=================================');
     console.log(`서버 실행 중: http://localhost:${PORT}`);
+    console.log(`웹소켓 서버도 함께 실행 중입니다.`);
     console.log(`Health Check: http://localhost:${PORT}/health`);
     console.log(`API 목록: http://localhost:${PORT}/api`);
     console.log('=================================');
@@ -153,4 +164,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = app;
+module.exports = { app, server };

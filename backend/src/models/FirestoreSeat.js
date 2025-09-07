@@ -29,10 +29,39 @@
  */
 
 const admin = require('firebase-admin');
+const { SEAT_COLLECTION } = require('../config/firestoreCollections');
 const db = admin.firestore();
+const seatCollection = db.collection(SEAT_COLLECTION);
 
 class FirestoreSeat {
-  // 모델 구현
+  /**
+   * 특정 좌석의 상태를 업데이트합니다. (센서 연동용)
+   * @param {string} seatId - 업데이트할 좌석의 문서 ID
+   * @param {string} status - 새로운 좌석 상태 (e.g., 'available', 'occupied')
+   * @returns {object|null} 업데이트된 좌석 객체 또는 null
+   */
+  static async updateStatus(seatId, status) {
+    const seatRef = seatCollection.doc(seatId);
+    const doc = await seatRef.get();
+
+    if (!doc.exists) {
+      console.error(`[FirestoreSeat.updateStatus] Error: Seat with ID ${seatId} not found.`);
+      return null;
+    }
+
+    await seatRef.update({
+      status: status,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const updatedDoc = await seatRef.get();
+    const updatedSeat = { id: updatedDoc.id, ...updatedDoc.data() };
+    
+    console.log(`[FirestoreSeat.updateStatus] Seat ${seatId} status updated to ${status}`);
+    return updatedSeat;
+  }
+
+  // 다른 기존 및 미래의 static 메서드들...
 }
 
 module.exports = FirestoreSeat;

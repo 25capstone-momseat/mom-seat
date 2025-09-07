@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './contexts/AppContext';
+import { SubwayProvider } from './contexts/SubwayContext';
 
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -20,7 +20,7 @@ import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
-    <AppProvider>
+    <SubwayProvider>
       <Router>
         <div className="App">
           <Navbar />
@@ -37,7 +37,6 @@ function App() {
               <Route path="/reservation/seats" element={<SeatReservation />} />
               <Route path="/reservation-history" element={<ReservationHistory />} />
               <Route path="/seat-search" element={<SeatSearch />} />
-              <Route path="/search" element={<SeatSearch />} />
 
               {/* 내 정보 관리 */}
               <Route path="/profile" element={<Profile />} />
@@ -48,7 +47,7 @@ function App() {
           </main>
         </div>
       </Router>
-    </AppProvider>
+    </SubwayProvider>
   );
 }
 

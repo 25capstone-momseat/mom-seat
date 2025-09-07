@@ -10,7 +10,7 @@ const SUBWAY_API_CONFIG = {
 const createSubwayAPIClient = () => {
   const client = axios.create({
     baseURL: SUBWAY_API_CONFIG.BASE_URL,
-    timeout: 15000,
+    timeout: 10000, // 타임아웃을 10초로 줄여서 클라이언트보다 먼저 실패하도록 설정
     headers: {
       'Content-Type': 'application/json',
       'User-Agent': 'SubwayApp/1.0'
