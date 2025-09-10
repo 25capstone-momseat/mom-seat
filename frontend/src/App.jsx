@@ -1,6 +1,7 @@
 // frontend/src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import { SubwayProvider } from './contexts/SubwayContext';
 
 import Navbar from './components/Navbar';
@@ -20,8 +21,9 @@ import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
-    <SubwayProvider>
-      <Router>
+    <AuthProvider>
+      <SubwayProvider>
+        <Router>
         <div className="App">
           <Navbar />
           <main className="main-content">
@@ -47,7 +49,8 @@ function App() {
           </main>
         </div>
       </Router>
-    </SubwayProvider>
+      </SubwayProvider>
+    </AuthProvider>
   );
 }
 

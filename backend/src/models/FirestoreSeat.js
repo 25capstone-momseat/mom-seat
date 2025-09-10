@@ -29,9 +29,9 @@
  */
 
 const admin = require('firebase-admin');
-const { SEAT_COLLECTION } = require('../config/firestoreCollections');
+const { SEAT_STATUS } = require('../config/firestoreCollections');
 const db = admin.firestore();
-const seatCollection = db.collection(SEAT_COLLECTION);
+const seatCollection = db.collection(SEAT_STATUS);
 
 class FirestoreSeat {
   /**

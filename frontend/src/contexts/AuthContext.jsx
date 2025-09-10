@@ -4,14 +4,12 @@ import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import api from '../config/api';
 
-const AuthContext = createContext({
+export const AuthContext = createContext({
   user: null,
   name: '',
   loading: true,
   setDisplayName: async (_n) => {},
 });
-
-export const useAuth = () => useContext(AuthContext);
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

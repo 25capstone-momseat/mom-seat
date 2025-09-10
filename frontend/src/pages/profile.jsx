@@ -1,7 +1,7 @@
 // frontend/src/pages/Profile.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import api from '../config/api';
 import { updateProfile } from 'firebase/auth';
 import { User } from 'lucide-react';
