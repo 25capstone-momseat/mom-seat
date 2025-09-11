@@ -1,14 +1,14 @@
-// frontend/src/pages/Home.jsx
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, CheckSquare, User, FileText, X } from 'lucide-react';
+import { MapPin, Search, CheckSquare, User, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../config/api';
+import styles from '../../styles/modules/Home.module.css';
 
-export default function Home() {
+const HomePage = () => {
   const navigate = useNavigate();
   const { user, name, loading } = useAuth();
-
+  
   const userName =
     (typeof name === 'string' && name.trim()) ||
     (user?.displayName && user.displayName.trim()) ||
@@ -17,7 +17,7 @@ export default function Home() {
   const [certOpen, setCertOpen] = useState(false);
   const [certLoading, setCertLoading] = useState(false);
   const [certError, setCertError] = useState('');
-  const [cert, setCert] = useState(null); // {name, hospital, issueDate, dueDate}
+  const [cert, setCert] = useState(null);
 
   async function openCertificate() {
     setCertOpen(true);
@@ -30,14 +30,13 @@ export default function Home() {
       if (!data?.certificate) {
         setCertError('저장된 임신확인서가 없습니다. OCR에서 먼저 업로드/인식해주세요.');
       }
-    } catch (e) {
+    } catch {
       setCertError('인증서 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setCertLoading(false);
     }
   }
 
-  // OCR에서 막 저장하고 돌아왔으면 자동으로 열기
   useEffect(() => {
     if (localStorage.getItem('certJustUpdated') === '1') {
       localStorage.removeItem('certJustUpdated');
@@ -45,105 +44,157 @@ export default function Home() {
     }
   }, []);
 
-  const menuItems = [
-    { title: '실시간\n좌석 조회', icon: MapPin, route: '/seat-search' },
-    { title: '좌석\n예약 & 취소', icon: Search, route: '/reservation' },
-    { title: '좌석 이용 내역', icon: CheckSquare, route: '/reservation-history' },
-    { title: '내 정보 관리', icon: User, route: '/profile' },
-  ];
-
   if (loading) {
     return (
-      <div className="min-h-screen" style={{ backgroundColor: '#FFF7F3' }}>
-        <div className="max-w-md mx-auto p-6">로딩 중...</div>
+      <div className={styles.loading}>
+        <div className={styles.loadingContent}>로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FFF7F3' }}>
-      <div className="max-w-md mx-auto p-6">
-        {/* Logo */}
-        <div className="text-center mt-8 mb-8">
-          <h1 className="text-3xl font-bold" style={{ color: '#C599B6' }}>
-            맘편한자리
-          </h1>
-        </div>
+    <div className={styles.container}>
+      {/* 헤더/로고 영역 */}
+      <div className={styles.header}>
+        <h1 className={styles.logo}>
+          <span className={styles.logoMam}>맘</span>
+          <span className={styles.logoPyeon}>편한자리</span>
+        </h1>
+      </div>
 
-        {/* 임신확인서 보기 카드 */}
-        <div
-          className="bg-white rounded-2xl p-6 mb-6 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-          onClick={openCertificate} // 👈 클릭 시 모달 열고 /certificate/me 조회
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <FileText size={32} style={{ color: '#7D6073' }} />
-              <span className="text-lg font-medium">내 임신확인서 보기</span>
+      {/* 임신확인서 보기 카드 */}
+      <div className={styles.certCardWrapper}>
+        <div className={styles.certCard} onClick={openCertificate}>
+          <div className={styles.certCardContent}>
+            <div className={styles.certCardLeft}>
+              <div className={styles.certIconBox}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <span className={styles.certText}>내 임신확인서 보기</span>
             </div>
-            <div className="w-8 h-8 bg-gray-200 rounded-full" />
           </div>
         </div>
+      </div>
 
-        {/* 인사말 */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-2">안녕하세요, {userName} 님!</h2>
-          <p className="text-gray-600 flex items-center">
-            임산부 인증 완료 <span className="ml-2 text-green-500">✓</span>
-          </p>
+      {/* 환영 메시지 */}
+      <div className={styles.welcomeSection}>
+        <h2 className={styles.welcomeTitle}>안녕하세요, {userName} 님!</h2>
+        <div className={styles.certStatus}>
+          <span>임산부 인증 완료</span>
+          <div className={styles.checkIcon}>
+            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
         </div>
+      </div>
 
-        {/* 메뉴 그리드 */}
-        <div className="grid grid-cols-2 gap-4">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => navigate(item.route)}
-              className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1"
-            >
-              <div className="flex flex-col items-center space-y-4">
-                <item.icon
-                  size={40}
-                  style={{ color: index % 2 === 0 ? '#C599B6' : '#7D6073' }}
-                />
-                <div className="text-center">
-                  <h3 className="font-bold text-lg whitespace-pre-line leading-tight">
-                    {item.title}
-                  </h3>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+      {/* 메인 기능 그리드 */}
+      <div className={styles.menuGrid}>
+        {/* 실시간 좌석 조회 */}
+        <button 
+          className={styles.menuButton}
+          onClick={() => navigate('/seat-search')}
+        >
+          <div className={styles.menuContent}>
+            <div className={styles.menuIconBox}>
+              <MapPin className={styles.menuIcon} />
+            </div>
+            <div className={styles.menuTitle}>
+              실시간<br />좌석 조회
+            </div>
+          </div>
+        </button>
+
+        {/* 좌석 예약 & 취소 */}
+        <button 
+          className={styles.menuButton}
+          onClick={() => navigate('/reservation')}
+        >
+          <div className={styles.menuContent}>
+            <div className={styles.menuIconBox}>
+              <Search className={styles.menuIcon} />
+            </div>
+            <div className={styles.menuTitle}>
+              좌석<br />예약 & 취소
+            </div>
+          </div>
+        </button>
+
+        {/* 좌석 이용 내역 */}
+        <button 
+          className={styles.menuButton}
+          onClick={() => navigate('/reservation-history')}
+        >
+          <div className={styles.menuContent}>
+            <div className={styles.menuIconBox}>
+              <CheckSquare className={styles.menuIcon} />
+            </div>
+            <div className={styles.menuTitle}>
+              좌석 이용 내역
+            </div>
+          </div>
+        </button>
+
+        {/* 내 정보 관리 */}
+        <button 
+          className={styles.menuButton}
+          onClick={() => navigate('/profile')}
+        >
+          <div className={styles.menuContent}>
+            <div className={styles.menuIconBox}>
+              <User className={styles.menuIcon} />
+            </div>
+            <div className={styles.menuTitle}>
+              내 정보 관리
+            </div>
+          </div>
+        </button>
       </div>
 
       {/* 인증서 모달 */}
       {certOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
-          <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-bold">내 임신확인서</h3>
-              <button onClick={() => setCertOpen(false)} className="p-1">
-                <X className="w-5 h-5 text-gray-500" />
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>내 임신확인서</h3>
+              <button onClick={() => setCertOpen(false)} className={styles.modalCloseButton}>
+                <X className={styles.modalCloseIcon} />
               </button>
             </div>
 
             {certLoading ? (
-              <div className="py-8 text-center text-sm text-gray-600">불러오는 중…</div>
+              <div className={styles.modalLoading}>불러오는 중…</div>
             ) : certError ? (
-              <div className="py-4 text-sm text-red-600">{certError}</div>
+              <div className={styles.modalError}>{certError}</div>
             ) : (
-              <div className="space-y-2 text-sm">
-                <Row label="산모이름" value={cert?.name} />
-                <Row label="병원" value={cert?.hospital} />
-                <Row label="발급일자" value={cert?.issueDate} />
-                <Row label="예정일" value={cert?.dueDate} />
+              <div className={styles.modalInfoList}>
+                <div className={styles.modalInfoRow}>
+                  <span className={styles.modalInfoLabel}>산모이름</span>
+                  <span className={styles.modalInfoValue}>{cert?.name || '-'}</span>
+                </div>
+                <div className={styles.modalInfoRow}>
+                  <span className={styles.modalInfoLabel}>병원</span>
+                  <span className={styles.modalInfoValue}>{cert?.hospital || '-'}</span>
+                </div>
+                <div className={styles.modalInfoRow}>
+                  <span className={styles.modalInfoLabel}>발급일자</span>
+                  <span className={styles.modalInfoValue}>{cert?.issueDate || '-'}</span>
+                </div>
+                <div className={styles.modalInfoRow}>
+                  <span className={styles.modalInfoLabel}>예정일</span>
+                  <span className={styles.modalInfoValue}>{cert?.dueDate || '-'}</span>
+                </div>
               </div>
             )}
 
-            <div className="mt-4 flex gap-2">
+            <div className={styles.modalActions}>
               <button
                 onClick={() => navigate('/ocr')}
-                className="flex-1 border border-gray-300 py-2 rounded-lg text-sm hover:bg-gray-50"
+                className={styles.modalActionButton}
               >
                 재업로드/OCR 다시하기
               </button>
@@ -153,13 +204,6 @@ export default function Home() {
       )}
     </div>
   );
-}
+};
 
-function Row({ label, value }) {
-  return (
-    <div className="flex justify-between py-1">
-      <span className="text-gray-600">{label}</span>
-      <span className="font-medium">{value || '-'}</span>
-    </div>
-  );
-}
+export default HomePage;

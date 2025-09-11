@@ -31,3 +31,5 @@ build/
 firebase-debug.log
 .firebaserc
 firebase.json
+
+prototype_img
