@@ -1,0 +1,109 @@
+.pageContainer {
+  min-height: 100vh;
+  background-color: #FFF7F3;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.backButton {
+  position: absolute;
+  top: 30px;
+  left: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.backButton:hover {
+  opacity: 0.7;
+}
+
+.backButton:active {
+  transform: scale(0.95);
+}
+
+.backIcon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+  color: #333;
+}
+
+.container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  gap: 30px;
+  margin-top: -50px;
+}
+
+.button {
+  width: 100%;
+  max-width: 350px;
+  padding: 45px 20px;
+  border: none;
+  border-radius: 25px;
+  font-size: 28px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.buttonReserve {
+  background-color: #FAD0C4;
+}
+
+.buttonCancel {
+  background-color: #F2B6CD;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 400px) {
+  .button {
+    max-width: 90%;
+    font-size: 24px;
+    padding: 40px 20px;
+  }
+  
+  .backButton {
+    top: 20px;
+    left: 15px;
+  }
+  
+  .container {
+    gap: 25px;
+  }
+}
+
+/* 태블릿 및 큰 화면 */
+@media (min-width: 768px) {
+  .button {
+    max-width: 400px;
+    padding: 50px 25px;
+    font-size: 30px;
+  }
+  
+  .container {
+    gap: 35px;
+  }
+}

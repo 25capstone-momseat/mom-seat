@@ -1,0 +1,176 @@
+.seatMapContainer {
+  width: 100%;
+}
+
+.statsContainer {
+  background-color: #FDF8FC;
+  border: 2px solid #E6D4E1;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.statBox {
+  background-color: white;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #E6D4E1;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.mapLayout {
+  background-color: white;
+  border: 2px solid #E6D4E1;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.mapTitle {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.gridContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rowLabel {
+  width: 24px;
+  text-align: center;
+  font-weight: bold;
+  color: #666;
+  font-size: 16px;
+}
+
+.seatsContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #E6D4E1;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendColorBox {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px 6px 0 0;
+}
+
+.legendLabel {
+  font-size: 13px;
+  color: #666;
+}
+
+/* Seat Component Styles */
+.seatWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.seatTop {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.seatBottom {
+  width: 48px;
+  height: 6px;
+  border-radius: 0 0 4px 4px;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  opacity: 0.8;
+}
+
+.notClickable {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Status-specific colors */
+.statusAvailable {
+  background-color: #C599B6;
+  border: 2px solid #C599B6;
+}
+.statusAvailableBottom {
+  background-color: #D9B8CF;
+}
+
+.statusReserved {
+  background-color: #FF6D9C;
+  border: 2px solid #FF6D9C;
+}
+.statusReservedBottom {
+  background-color: #FF8FB3;
+}
+
+.statusOccupied {
+  background-color: #F0ADC6;
+  border: 2px solid #F0ADC6;
+}
+.statusOccupiedBottom {
+  background-color: #F5C4D6;
+}
+
+.statusDisabled {
+  background-color: #8F8F8F;
+  border: 2px solid #8F8F8F;
+}
+.statusDisabledBottom {
+  background-color: #A8A8A8;
+}

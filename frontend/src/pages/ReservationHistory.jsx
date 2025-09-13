@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import styles from '../../styles/modules/ReservationHistory.module.css';
 
 const SeatReservation = () => {
+  const navigate = useNavigate();
   const [reservations] = useState([
     {
       date: '2025-03-01',
@@ -41,121 +44,52 @@ const SeatReservation = () => {
   };
 
   const handleBack = () => {
-    console.log('뒤로가기');
-  };
-
-  // 인라인 스타일로 모든 스타일 직접 정의
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: '#FFF7F3',
-      padding: 0,
-      margin: 0
-    },
-    header: {
-      display: 'flex',
-      alignItems: 'center',
-      padding: '16px'
-    },
-    backButton: {
-      padding: '8px',
-      background: 'transparent',
-      border: 'none',
-      cursor: 'pointer',
-      borderRadius: '8px',
-      transition: 'background 0.2s'
-    },
-    titleContainer: {
-      textAlign: 'center',
-      padding: '24px 0'
-    },
-    title: {
-      fontSize: '32px',
-      fontWeight: 'bold',
-      color: '#7D6073',
-      margin: 0
-    },
-    listContainer: {
-      padding: '0 24px 32px 24px'
-    },
-    card: {
-      backgroundColor: '#FFFFFF',
-      borderRadius: '24px',
-      padding: '32px',
-      marginBottom: '32px',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-      transition: 'box-shadow 0.3s'
-    },
-    cardHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      marginBottom: '24px'
-    },
-    dateTime: {
-      color: '#374151',
-      fontSize: '16px',
-      margin: '2px 0'
-    },
-    seatContainer: {
-      textAlign: 'center',
-      padding: '24px 0'
-    },
-    seatNumber: {
-      fontSize: '38px',
-      fontWeight: 'bold',
-      color: '#1F2937',
-      marginBottom: '16px'
-    },
-    status: {
-      fontSize: '20px',
-      fontWeight: '500'
-    }
+    navigate(-1);
   };
 
   return (
-    <div style={styles.container}>
+    <div className={styles.container}>
       {/* Header */}
-      <div style={styles.header}>
+      <div className={styles.header}>
         <button 
           onClick={handleBack}
-          style={styles.backButton}
-          onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.5)'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+          className={styles.backButton}
         >
           <ChevronLeft size={24} />
         </button>
       </div>
 
       {/* Title */}
-      <div style={styles.titleContainer}>
-        <h1 style={styles.title}>좌석 이용 내역</h1>
+      <div className={styles.titleContainer}>
+        <h1 className={styles.title}>좌석 이용 내역</h1>
       </div>
 
       {/* Reservation List */}
-      <div style={styles.listContainer}>
+      <div className={styles.listContainer}>
         {reservations.map((reservation, index) => (
           <div 
             key={index}
-            style={styles.card}
-            onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 10px 15px rgba(0, 0, 0, 0.15)'}
-            onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)'}
+            className={styles.card}
           >
-            <div style={styles.cardHeader}>
+            <div className={styles.cardHeader}>
               <div>
-                <p style={styles.dateTime}>{formatDate(reservation.date)}</p>
-                <p style={styles.dateTime}>{reservation.time}</p>
+                <p className={styles.dateTime}>{formatDate(reservation.date)}</p>
+                <p className={styles.dateTime}>{reservation.time}</p>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={styles.dateTime}>{reservation.agency}</p>
-                <p style={styles.dateTime}>{reservation.trainNumber}</p>
+              <div className={styles.rightAlign}>
+                <p className={styles.dateTime}>{reservation.agency}</p>
+                <p className={styles.dateTime}>{reservation.trainNumber}</p>
               </div>
             </div>
             
-            <div style={styles.seatContainer}>
-              <div style={styles.seatNumber}>
+            <div className={styles.seatContainer}>
+              <div className={styles.seatNumber}>
                 {reservation.seat}
               </div>
-              <div style={{ ...styles.status, color: reservation.statusColor }}>
+              <div 
+                className={styles.status}
+                style={{ color: reservation.statusColor }}
+              >
                 {reservation.status}
               </div>
             </div>

@@ -1,19 +1,3 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-
-// function Navbar() {
-//   return (
-//     <nav style={{ marginBottom: "20px" }}>
-//       <Link to="/login"><button>로그인</button></Link>
-//       <Link to="/signup"><button>회원가입</button></Link>
-//       <Link to="/ocr"><button>임신확인서</button></Link>
-//       <Link to="/"><button>홈</button></Link>
-//     </nav>
-//   );
-// }
-
-// export default Navbar;
-
 import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -55,7 +39,7 @@ export default function Navbar() {
       {!user && <Link to="/signup"><Btn>회원가입</Btn></Link>}
 
       <Link to="/ocr"><Btn>임신확인서</Btn></Link>
-      <Link to="/"><Btn>홈</Btn></Link>
+      <a href="/"><Btn>홈</Btn></a>
     </nav>
   );
 }

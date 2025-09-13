@@ -1,0 +1,317 @@
+/* Container */
+.container {
+  min-height: 100vh;
+  background-color: #FFF7F3;
+}
+
+/* Header */
+.header {
+  background-color: #FFF7F3;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.titleMam {
+  color: #7D6073;
+}
+
+.titleRest {
+  color: #C599B6;
+}
+
+/* Search Section */
+.searchSection {
+  background-color: #FAD0C4;
+  padding: 2rem 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+/* Error Message */
+.errorMessage {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Select Options */
+.selectOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Dropdown Container */
+.dropdownContainer {
+  position: relative;
+}
+
+.selectButton {
+  width: 100%;
+  padding: 1rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  font-size: 1.125rem;
+}
+
+.selectButton:hover:not(.disabled) {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.selectButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chevron {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #9ca3af;
+}
+
+/* Dropdown Menu */
+.dropdownMenu {
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+  margin-top: 0.5rem;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background-color: #f9fafb;
+}
+
+.dropdownGroup {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dropdownGroup:last-child {
+  border-bottom: none;
+}
+
+.dropdownGroupHeader {
+  padding: 0.5rem 1rem;
+  background-color: #f9fafb;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Train Info in Dropdown */
+.trainInfo {
+  display: flex;
+  justify-content: space-between;
+}
+
+.trainNumber {
+  font-weight: 500;
+}
+
+.trainDirection {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.trainStatus {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.noData {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* Seat Info Section */
+.seatInfoSection {
+  padding: 1.5rem;
+}
+
+.trainInfoCard {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.trainHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.lineName {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.trainName {
+  font-size: 1.25rem;
+}
+
+.trainDateTime {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+/* Seat Stats */
+.seatStats {
+  display: flex;
+  justify-content: space-around;
+  background-color: rgba(197, 153, 182, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #374151;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* Seat Map Container */
+.seatMapContainer {
+  background-color: #f9fafb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.legendColor {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem;
+}
+
+.legendColor.available {
+  background-color: #C599B6;
+}
+
+.legendColor.occupied {
+  background-color: #F0ADC6;
+}
+
+.legendColor.selected {
+  background-color: #FF6D9C;
+}
+
+/* Reserve Button */
+.reserveButton {
+  width: 100%;
+  padding: 1rem;
+  background-color: #FAD0C4;
+  border: 1px solid #E6B2BA;
+  border-radius: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.reserveButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.reserveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading Overlay */
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.loadingSpinner {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid #f3f4f6;
+  border-top-color: #ec4899;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
