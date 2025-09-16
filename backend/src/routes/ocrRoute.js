@@ -6,10 +6,56 @@ const path = require('path');
 const sharp = require('sharp');
 const auth = require('../middleware/auth');
 const Tesseract = require('tesseract.js');
+const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
+
+/* ---------------- CLOVA OCR 헬퍼 함수들 ---------------- */
+ async function callClovaOCR({ base64, url, lang = 'ko' }) {
+   const headers = {
+     'X-OCR-SECRET': process.env.NCP_OCR_SECRET,
+     'Content-Type': 'application/json'
+   };
+
+   const images = [];
+   if (base64) {
+     images.push({ format: 'jpg', name: 'upload', data: base64 });
+   } else if (url) {
+     images.push({ format: 'jpg', name: 'remote', url });
+   } else {
+     throw new Error('이미지(base64 또는 url)가 필요합니다.');
+   }
+
+   const requestBody = {
+     images,
+     requestId: uuidv4(),
+     version: 'V2',
+     timestamp: Date.now(),
+     lang
+   };
+
+    const response = await axios.post(process.env.NCP_OCR_INVOKE_URL, requestBody, { headers, timeout: 15000 });
+    return response.data;
+  }
+
+function clovaPickText(ocrJson) {
+  const texts = [];
+  (ocrJson?.images || []).forEach(img => {
+    if (Array.isArray(img.fields)) {
+      img.fields.forEach(f => texts.push(f?.text || f?.inferText || ''));
+    }
+    if (Array.isArray(img.lines)) {
+      img.lines.forEach(line => (line.words || []).forEach(w => texts.push(w?.text || w?.inferText || '')));
+    }
+    if (Array.isArray(img.words)) {
+      img.words.forEach(w => texts.push(w?.text || w?.inferText || ''));
+    }
+  });
+  return texts.filter(Boolean).join('\n').trim();
+}
 
 /* ---------------- 전처리: 대비/흑백/사이즈/DPI ---------------- */
 async function preprocess(buffer) {
-  return sharp(buffer)
+  return sharp(buffer).rotate()
     .rotate()                 // EXIF 기준 자동 회전
     .grayscale()
     .normalize()              // 대비 보정
@@ -56,7 +102,7 @@ function extractFields(text = '') {
   };
 }
 
-/* ---------------- 업로드: file 또는 image 허용 ---------------- */
+/* ---------------- 기존 Tesseract OCR 업로드 ---------------- */
 router.post(
   '/upload',
   auth,
@@ -91,6 +137,83 @@ router.post(
     } catch (e) {
       console.error('OCR upload error:', e);
       return res.status(500).json({ success: false, error: 'ocr_failed' });
+    }
+  }
+);
+
+/* ---------------- CLOVA: 임신확인서 전용(필드 추출 포함) ---------------- */
+router.post(
+  '/clova',
+  auth,
+  upload.fields([{ name: 'file' }, { name: 'image' }]),
+  async (req, res) => {
+    try {
+      // 업로드 파일 or base64 수집
+      const up = (req.files?.file && req.files.file[0]) || (req.files?.image && req.files.image[0]);
+      let base64 = req.body?.imageBase64 || '';
+      if (up?.buffer) base64 = up.buffer.toString('base64');
+      if (base64 && base64.includes(',')) base64 = base64.split(',')[1];
+      if (!base64 && !req.body?.imageUrl) {
+        return res.status(400).json({ success: false, error: 'no_image' });
+      }
+      
+      const ocrJson = await callClovaOCR({
+        base64: base64 || undefined,
+        url: req.body?.imageUrl || undefined,
+        lang: 'ko'
+      });
+      
+      const text = clovaPickText(ocrJson);
+      const fields = extractFields(text); // 기존 함수 재사용
+      
+      return res.json({
+        success: true,
+        fields,     // { name, hospital, issueDate, dueDate }
+        raw: text,  // 합쳐진 전체 텍스트
+        clova: ocrJson
+      });
+    } catch (e) {
+      console.error('CLOVA ocr error:', e?.response?.data || e.message);
+      return res.status(e?.response?.status || 500).json({ success: false, error: 'clova_failed' });
+    }
+  }
+);
+
+/* ---------------- CLOVA: 일반 문서(풀텍스트만) ---------------- */
+router.post(
+  '/clova/general',
+  auth,
+  upload.fields([{ name: 'file' }, { name: 'image' }]),
+  async (req, res) => {
+    try {
+      const up = (req.files?.file && req.files.file[0]) || (req.files?.image && req.files.image[0]);
+      let base64 = req.body?.imageBase64 || '';
+      
+      if (up?.buffer) {
+        const processed = await preprocessForClova(up.buffer);
+        base64 = processed.toString('base64');
+      }
+      if (base64 && base64.includes(',')) base64 = base64.split(',')[1];
+      if (!base64 && !req.body?.imageUrl) {
+        return res.status(400).json({ success: false, error: 'no_image' });
+      }
+      
+      const ocrJson = await callClovaOCR({
+        base64: base64 || undefined,
+        url: req.body?.imageUrl || undefined,
+        lang: 'ko'
+      });
+      
+      const text = clovaPickText(ocrJson);
+      
+      return res.json({ 
+        success: true, 
+        fullText: text, 
+        clova: ocrJson 
+      });
+    } catch (e) {
+      console.error('CLOVA ocr general error:', e?.response?.data || e.message);
+      return res.status(e?.response?.status || 500).json({ success: false, error: 'clova_failed' });
     }
   }
 );

@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Upload, CheckCircle, X } from 'lucide-react';
-import api, { apiUpload } from '../config/api';
+import api from '../config/api';
+import { clovaPregnancyCertByFile } from '../services/ocrService';
 
 export default function OCR() {
   const navigate = useNavigate();
@@ -85,40 +86,22 @@ export default function OCR() {
     setError('');
     setSaved(false);
     try {
-      const { data } = await apiUpload('/ocr/upload', file); // fieldName 기본 'file'
-      console.log('[OCR 응답]', data);
+      // 기존 apiUpload 대신 clovaPregnancyCertByFile 함수 사용
+      const data = await clovaPregnancyCertByFile(file);
+      console.log('[CLOVA OCR 응답]', data);
 
-      // 1) 서버 표준 응답 우선
-      const container = data?.fields || data?.result || data;
-      let fields = {
-        name: container?.name || '',
-        hospital: container?.hospital || '',
-        issueDate: container?.issueDate || container?.date || '',
-        dueDate: container?.dueDate || '',
-      };
+      // 클로바 서비스에서 이미 정리된 fields와 raw 텍스트를 받음
+      const { fields, raw } = data;
 
-      // 2) 누락 시 raw 텍스트에서 보정 추출
-      const rawText = data?.raw || data?.ocrText || data?.text || '';
-      if (!fields.name || !fields.hospital || !fields.issueDate || !fields.dueDate) {
-        const auto = extractFromRaw(rawText);
-        fields = {
-          name: fields.name || auto.name,
-          hospital: fields.hospital || auto.hospital,
-          issueDate: fields.issueDate || auto.issueDate,
-          dueDate: fields.dueDate || auto.dueDate,
-        };
-      }
-
+      // 결과를 상태에 설정 (usedUrl은 클로바 서비스에서 제공하지 않으므로, 더미 값을 사용하거나 제거 가능)
       setResult({
-        usedUrl:
-          data?.usedUrl ||
-          `${import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_BASE_URL}/ocr/upload`,
-        raw: rawText,
+        usedUrl: 'Clova OCR Service',
+        raw,
         fields,
       });
-      setForm(fields); // ✅ 입력칸 자동 채움
+      setForm(fields); // 입력칸 자동 채움
     } catch (e) {
-      setError(e.userMessage || e.message || 'OCR 처리 중 오류가 발생했습니다.');
+      setError(e?.response?.data?.error || e.message || 'OCR 처리 중 오류가 발생했습니다.');
     } finally {
       setIsProcessing(false);
     }
@@ -179,7 +162,7 @@ export default function OCR() {
             <div className="flex gap-2">
               <button
                 onClick={runOCR}
-                disabled={isProcessing}
+                disabled={!file || isProcessing}
                 className="flex-1 rounded-xl py-3 text-white disabled:opacity-50"
                 style={{ background: '#E9A7B9' }}
               >

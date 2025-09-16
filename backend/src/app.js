@@ -97,7 +97,6 @@ app.use('/api/subway', subwayRoutes);
 app.use('/api/seats', seatRoute); // 좌석 라우트 등록
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/certificate', require('./routes/certificate'));
-app.use('/api/profile', require('./routes/profile'));
 
 // 인증 관련 라우터 (추가 시)
 // app.use('/api/auth', authRouter);
@@ -157,6 +156,8 @@ if (require.main === module) {
     console.log('=================================');
     console.log('API 엔드포인트:');
     console.log(`   OCR:          /api/ocr/upload`);
+    console.log(`   OCR(CLOVA):   /api/ocr/clova`);
+    console.log(`   OCR(General): /api/ocr/clova/general`);
     console.log(`   Reservations: /api/reservations`);
     console.log(`   Subway:       /api/subway`);
     console.log(`   Profile:      /api/profile`);
