@@ -2,10 +2,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
+import { useState } from 'react';
+import styles from '../../styles/modules/Navbar.module.css';
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth(); // AuthContext에 user, loading이 있다고 가정
+  const { user, loading } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const onLogout = async () => {
     try {
@@ -16,30 +19,160 @@ export default function Navbar() {
     }
   };
 
-  // 아주 단순한 버튼 스타일(스크린샷 느낌)
-  const Btn = ({ children, ...p }) => (
-    <button
-      {...p}
-      style={{ padding: '8px 14px', border: '1px solid #cfcfcf', borderRadius: 6, background: '#eee' }}
-    >
-      {children}
-    </button>
-  );
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   return (
-    <nav style={{ display: 'flex', gap: 8, padding: 8, borderBottom: '1px solid #eee' }}>
-      {/* 로그인 상태에 따라 로그인/로그아웃 토글 */}
-      {!loading && (user ? (
-        <Btn onClick={onLogout}>로그아웃</Btn>
-      ) : (
-        <Link to="/login"><Btn>로그인</Btn></Link>
-      ))}
+    <>
+      <nav className={styles.navbar}>
+        {/* 로고 */}
+        <Link to="/" className={styles.logo}>
+          맘편한자리
+        </Link>
 
-      {/* 로그인 안 되어 있을 때만 회원가입 노출(선택) */}
-      {!user && <Link to="/signup"><Btn>회원가입</Btn></Link>}
+        {/* 데스크톱 메뉴 */}
+        <ul className={styles.navMenu}>
+          {!loading && !user && (
+            <>
+              <li>
+                <Link to="/login" className={styles.navItem}>
+                  로그인
+                </Link>
+              </li>
+              <li>
+                <Link to="/signup" className={styles.navItem}>
+                  회원가입
+                </Link>
+              </li>
+            </>
+          )}
+          <li>
+            <Link to="/ocr" className={styles.navItem}>
+              임신확인서
+            </Link>
+          </li>
+          {user && (
+            <li>
+              {/* TODO: 내 정보 관리 페이지 라우트 추가 필요 */}
+              <Link to="/profile" className={styles.navItem}>
+                내 정보 관리
+              </Link>
+            </li>
+          )}
+        </ul>
 
-      <Link to="/ocr"><Btn>임신확인서</Btn></Link>
-      <a href="/"><Btn>홈</Btn></a>
-    </nav>
+        {/* 오른쪽 액션 그룹 */}
+        <div className={styles.rightActions}>
+          {/* 액션 버튼들 */}
+          <div className={styles.navActions}>
+            <Link to="/" className={`${styles.navButton} ${styles.outline}`}>
+              홈으로
+            </Link>
+            
+            {!loading && (
+              user ? (
+                <button 
+                  onClick={onLogout} 
+                  className={`${styles.navButton} ${styles.primary}`}
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <Link 
+                  to="/login" 
+                  className={`${styles.navButton} ${styles.primary}`}
+                >
+                  로그인
+                </Link>
+              )
+            )}
+          </div>
+
+          {/* 햄버거 메뉴 버튼 */}
+          <div 
+            className={`${styles.hamburger} ${isMobileMenuOpen ? styles.active : ''}`}
+            onClick={toggleMobileMenu}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </nav>
+
+      {/* 모바일 메뉴 */}
+      <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.active : ''}`}>
+        <ul className={styles.mobileMenuList}>
+          {!loading && !user && (
+            <>
+              <li>
+                <Link 
+                  to="/login" 
+                  className={styles.mobileMenuItem}
+                  onClick={closeMobileMenu}
+                >
+                  로그인
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/signup" 
+                  className={styles.mobileMenuItem}
+                  onClick={closeMobileMenu}
+                >
+                  회원가입
+                </Link>
+              </li>
+            </>
+          )}
+          <li>
+            <Link 
+              to="/ocr" 
+              className={styles.mobileMenuItem}
+              onClick={closeMobileMenu}
+            >
+              임신확인서
+            </Link>
+          </li>
+          {user && (
+            <>
+              <li>
+                <Link 
+                  to="/profile" 
+                  className={styles.mobileMenuItem}
+                  onClick={closeMobileMenu}
+                >
+                  내 정보 관리
+                </Link>
+              </li>
+              <li>
+                <button 
+                  onClick={() => {
+                    onLogout();
+                    closeMobileMenu();
+                  }}
+                  className={styles.mobileMenuItem}
+                  style={{ 
+                    width: '100%', 
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '16px'
+                  }}
+                >
+                  로그아웃
+                </button>
+              </li>
+            </>
+          )}
+        </ul>
+      </div>
+    </>
   );
 }
