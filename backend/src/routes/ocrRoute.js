@@ -129,10 +129,22 @@ router.post(
       const text = ocr?.text || '';
       const fields = extractFields(text);
 
+      // 🔥 백엔드 로그에 전체 텍스트 출력
+      console.log('========== TESSERACT OCR 결과 ==========');
+      console.log('사용자 ID:', req.user?.id || 'unknown');
+      console.log('처리 시간:', new Date().toISOString());
+      console.log('파일명:', up.originalname || 'unknown');
+      console.log('파일 크기:', up.size || 'unknown');
+      console.log('추출된 필드:', JSON.stringify(fields, null, 2));
+      console.log('--- 인식된 전체 텍스트 ---');
+      console.log(text);
+      console.log('=======================================');
+
       return res.json({
         success: true,
         fields,  // { name, hospital, issueDate, dueDate }
-        raw: text,
+        // raw: text,  // 🚫 프론트엔드로 전송하지 않음
+        usedUrl: 'Tesseract OCR' // 프론트엔드에서 사용할 API 정보
       });
     } catch (e) {
       console.error('OCR upload error:', e);
@@ -166,11 +178,29 @@ router.post(
       const text = clovaPickText(ocrJson);
       const fields = extractFields(text); // 기존 함수 재사용
       
+      // 🔥 백엔드 로그에 전체 텍스트 출력
+      console.log('========== CLOVA OCR 결과 ==========');
+      console.log('사용자 ID:', req.user?.id || 'unknown');
+      console.log('처리 시간:', new Date().toISOString());
+      console.log('파일명:', up?.originalname || 'base64/url');
+      console.log('파일 크기:', up?.size || 'unknown');
+      console.log('요청 ID:', ocrJson.requestId || 'unknown');
+      console.log('추출된 필드:', JSON.stringify(fields, null, 2));
+      console.log('--- 인식된 전체 텍스트 ---');
+      console.log(text);
+      console.log('--- CLOVA 원본 응답 (요약) ---');
+      console.log('이미지 수:', ocrJson.images?.length || 0);
+      ocrJson.images?.forEach((img, idx) => {
+        console.log(`이미지 ${idx + 1}: ${img.fields?.length || 0}개 필드, ${img.words?.length || 0}개 단어`);
+      });
+      console.log('====================================');
+      
       return res.json({
         success: true,
         fields,     // { name, hospital, issueDate, dueDate }
-        raw: text,  // 합쳐진 전체 텍스트
-        clova: ocrJson
+        // raw: text,  // 🚫 프론트엔드로 전송하지 않음
+        // clova: ocrJson  // 🚫 원본 응답도 전송하지 않음
+        usedUrl: 'Clova OCR Service'
       });
     } catch (e) {
       console.error('CLOVA ocr error:', e?.response?.data || e.message);
@@ -190,7 +220,8 @@ router.post(
       let base64 = req.body?.imageBase64 || '';
       
       if (up?.buffer) {
-        const processed = await preprocessForClova(up.buffer);
+        // preprocessForClova 함수가 정의되지 않았으므로 기본 preprocess 사용
+        const processed = await preprocess(up.buffer);
         base64 = processed.toString('base64');
       }
       if (base64 && base64.includes(',')) base64 = base64.split(',')[1];
@@ -206,10 +237,22 @@ router.post(
       
       const text = clovaPickText(ocrJson);
       
+      // 🔥 백엔드 로그에 전체 텍스트 출력
+      console.log('========== CLOVA 일반문서 OCR 결과 ==========');
+      console.log('사용자 ID:', req.user?.id || 'unknown');
+      console.log('처리 시간:', new Date().toISOString());
+      console.log('파일명:', up?.originalname || 'base64/url');
+      console.log('파일 크기:', up?.size || 'unknown');
+      console.log('텍스트 길이:', text.length, '글자');
+      console.log('--- 인식된 전체 텍스트 ---');
+      console.log(text);
+      console.log('==========================================');
+      
       return res.json({ 
         success: true, 
-        fullText: text, 
-        clova: ocrJson 
+        fullText: text,  // 일반문서는 전체 텍스트만 반환 (기존 유지)
+        // clova: ocrJson  // 🚫 원본 응답은 전송하지 않음
+        usedUrl: 'Clova OCR Service (General)'
       });
     } catch (e) {
       console.error('CLOVA ocr general error:', e?.response?.data || e.message);
@@ -221,7 +264,20 @@ router.post(
 /* ---- (선택) 디버그: 텍스트만 보내서 파싱 확인 ---- */
 router.post('/parse', auth, express.json(), (req, res) => {
   const text = req.body?.text || '';
-  return res.json({ success: true, fields: extractFields(text) });
+  const fields = extractFields(text);
+  
+  // 🔥 파싱 테스트 로그
+  console.log('========== 텍스트 파싱 테스트 ==========');
+  console.log('사용자 ID:', req.user?.id || 'unknown');
+  console.log('처리 시간:', new Date().toISOString());
+  console.log('입력 텍스트 길이:', text.length, '글자');
+  console.log('--- 입력 텍스트 ---');
+  console.log(text);
+  console.log('--- 추출된 필드 ---');
+  console.log(JSON.stringify(fields, null, 2));
+  console.log('====================================');
+  
+  return res.json({ success: true, fields });
 });
 
 module.exports = router;

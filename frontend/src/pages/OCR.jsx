@@ -53,31 +53,31 @@ export default function OCR() {
     return `${y.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   };
 
-  /** ---- raw 텍스트에서 자동 추출(이름/병원/임신확인일/분만예정일) ---- */
-  const extractFromRaw = (raw = '') => {
-    const t = raw.replace(/\r/g, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
-    const pick = (re) => (re.exec(t)?.[1] || '').trim();
+  // /** ---- raw 텍스트에서 자동 추출(이름/병원/임신확인일/분만예정일) ---- */
+  // const extractFromRaw = (raw = '') => {
+  //   const t = raw.replace(/\r/g, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  //   const pick = (re) => (re.exec(t)?.[1] || '').trim();
 
-    const name =
-      pick(/(?:산모명|성명|이름)\s*[:：]?\s*([가-힣]{2,6})/) || '';
+  //   const name =
+  //     pick(/(?:산모명|성명|이름)\s*[:：]?\s*([가-힣]{2,6})/) || '';
 
-    const issueRaw =
-      pick(/(?:임신\s*확인일|임신확인일|발급일자|작성일|작성일자)\s*[:：]?\s*([0-9\s.\-년월일]+)/i);
+  //   const issueRaw =
+  //     pick(/(?:임신\s*확인일|임신확인일|발급일자|작성일|작성일자)\s*[:：]?\s*([0-9\s.\-년월일]+)/i);
 
-    const dueRaw =
-      pick(/(?:분만\s*예정일|분만예정일|출산예정일|예정일|EDD)\s*[:：]?\s*([0-9\s.\-년월일]+)/i);
+  //   const dueRaw =
+  //     pick(/(?:분만\s*예정일|분만예정일|출산예정일|예정일|EDD)\s*[:：]?\s*([0-9\s.\-년월일]+)/i);
 
-    const hospMatches = [...t.matchAll(/([가-힣A-Za-z·\s]{2,25}(?:여성병원|산부인과|병원|의원|의료원))/g)];
-    const hospital =
-      hospMatches.sort((a, b) => (b[1]?.length || 0) - (a[1]?.length || 0))[0]?.[1]?.trim() || '';
+  //   const hospMatches = [...t.matchAll(/([가-힣A-Za-z·\s]{2,25}(?:여성병원|산부인과|병원|의원|의료원))/g)];
+  //   const hospital =
+  //     hospMatches.sort((a, b) => (b[1]?.length || 0) - (a[1]?.length || 0))[0]?.[1]?.trim() || '';
 
-    return {
-      name,
-      hospital,
-      issueDate: normalizeDate(issueRaw),
-      dueDate: normalizeDate(dueRaw),
-    };
-  };
+  //   return {
+  //     name,
+  //     hospital,
+  //     issueDate: normalizeDate(issueRaw),
+  //     dueDate: normalizeDate(dueRaw),
+  //   };
+  // };
 
   /** ---- OCR 실행 ---- */
   const runOCR = async () => {
