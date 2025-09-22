@@ -100,6 +100,16 @@
   justify-content: center;
 }
 
+.uncheckedIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: #f44336; /* Red */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 메뉴 그리드 */
 .menuGrid {
   padding: 0 1.5rem;

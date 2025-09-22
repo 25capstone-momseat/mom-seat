@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, CheckSquare, User, X } from 'lucide-react';
+import { MapPin, Search, CheckSquare, User, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../config/api';
 import styles from '../../styles/modules/Home.module.css';
@@ -82,14 +82,23 @@ const HomePage = () => {
       {/* 환영 메시지 */}
       <div className={styles.welcomeSection}>
         <h2 className={styles.welcomeTitle}>안녕하세요, {userName} 님!</h2>
-        <div className={styles.certStatus}>
-          <span>임산부 인증 완료</span>
-          <div className={styles.checkIcon}>
-            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
+        {user ? (
+          <div className={styles.certStatus}>
+            <span>임산부 인증 완료</span>
+            <div className={styles.checkIcon}>
+              <svg className="w-3 h-3" style={{ color: '#6C7181' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className={styles.certStatus}>
+            <span>임산부 인증 필요</span>
+            <div className={styles.uncheckedIcon}>
+              <span style={{ color: '#d0d0d5ff', fontWeight: 'bold', fontSize: '1rem', position: 'relative', top: '1px' }}>!</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 메인 기능 그리드 */}
