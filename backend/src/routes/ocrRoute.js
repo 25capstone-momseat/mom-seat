@@ -9,6 +9,13 @@ const Tesseract = require('tesseract.js');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
+const authRequired = require('../middleware/auth');
+const ctrl = require('../controllers/ocrController');
+
+router.post('/submit', authRequired, upload.single('file'), ctrl.submitOcr);
+router.put('/:ocrid/edit', authRequired, ctrl.editOcr);
+router.post('/:ocrid/confirm', authRequired, ctrl.confirmOcr);
+
 /* ---------------- CLOVA OCR 헬퍼 함수들 ---------------- */
  async function callClovaOCR({ base64, url, lang = 'ko' }) {
    const headers = {
