@@ -1,0 +1,521 @@
+/* 전역 박스 사이징 설정 */
+* {
+  box-sizing: border-box;
+}
+
+/* 메인 컨테이너 */
+.container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #FFF7F3;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 헤더 */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #FFF7F3;
+}
+
+.headerTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+/* 메인 섹션 */
+.mainSection {
+  background-color: #FFF7F3;
+  padding: 1rem;
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+  word-break: keep-all;
+}
+
+.refreshButton {
+  padding: 0.375rem;
+  border-radius: 50%;
+  transition: all 0.2s;
+  background-color: rgba(197, 153, 182, 0.1);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.refreshButton:hover:not(:disabled) {
+  background-color: rgba(197, 153, 182, 0.2);
+}
+
+.refreshIcon {
+  width: 1rem;
+  height: 1rem;
+  color: #C599B6;
+}
+
+.refreshIcon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 필터 그리드 */
+.filterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filterLabel {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.filterSelect {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: white;
+  font-size: 0.875rem;
+}
+
+.filterSelect:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(197, 153, 182, 0.2);
+  border-color: #C599B6;
+}
+
+.filterSelect:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 즐겨찾기 섹션 */
+.favoritesSection {
+  margin-bottom: 1rem;
+}
+
+.favoritesLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.favoritesWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.favoriteButton {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  border-radius: 9999px;
+  border: 1px solid #C599B6;
+  background-color: white;
+  color: #C599B6;
+  transition: all 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.favoriteButton.active {
+  background-color: #C599B6;
+  color: white;
+}
+
+.favoriteButton:hover {
+  transform: translateY(-1px);
+}
+
+/* 에러 메시지 */
+.errorMessage {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+}
+
+.errorText {
+  font-size: 0.8125rem;
+  color: #dc2626;
+}
+
+/* 도착 정보 리스트 */
+.arrivalList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.trainCard {
+  width: 100%;
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trainCard:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  transform: translateY(-1px);
+}
+
+.trainCard.selected {
+  border-color: #C599B6;
+  background-color: rgba(197, 153, 182, 0.05);
+}
+
+.trainCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.trainDirection {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.mapIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #C599B6;
+  flex-shrink: 0;
+}
+
+.directionText {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrivingSoon {
+  font-size: 0.625rem;
+  background-color: #fef2f2;
+  color: #dc2626;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusText {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.statusText.soon {
+  color: #ef4444;
+}
+
+.statusText.running {
+  color: #3b82f6;
+}
+
+.statusText.default {
+  color: #6b7280;
+}
+
+.trainCardDetails {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.clockIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.timeText {
+  font-size: 0.8125rem;
+  color: #4b5563;
+}
+
+.trainNumber {
+  font-size: 0.6875rem;
+  color: #9ca3af;
+}
+
+/* 로딩 상태 */
+.loadingContainer {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid transparent;
+  border-bottom-color: #C599B6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+.loadingText {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+/* 빈 상태 */
+.emptyState {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.emptyText {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* 업데이트 정보 */
+.updateInfo {
+  font-size: 0.6875rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.cachedLabel {
+  margin-left: 0.25rem;
+}
+
+/* 좌석 현황 섹션 */
+.seatSection {
+  padding: 1rem;
+  background-color: white;
+  width: 100%;
+  box-shadow: 0 -1px 3px 0 rgb(0 0 0 / 0.05);
+}
+
+.seatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.seatHeaderLeft,
+.seatHeaderRight {
+  min-width: 0;
+}
+
+.seatHeaderLeft h3,
+.seatHeaderRight h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.seatHeaderLeft p,
+.seatHeaderRight p {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.seatHeaderRight {
+  text-align: right;
+}
+
+.seatHeaderRight p {
+  color: #C599B6;
+}
+
+/* 버튼 섹션 */
+.buttonSection {
+  margin-top: 1.5rem;
+  background-color: #FFF7F3;  /* 아주 연한 분홍빛 배경 */
+  padding: 1.25rem;
+  border-top: 1px solid #f0e8e6;  /* 상단 구분선 */
+  margin-left: -1rem;
+  margin-right: -1rem;
+  margin-bottom: -1rem;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #C599B6;
+  background-color: white;
+  color: #C599B6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background-color: rgba(197, 153, 182, 0.05);
+  transform: translateY(-1px);
+}
+
+.reserveButton {
+  width: 100%;
+  color: white;
+  padding: 0.75rem 0;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  background-color: #C599B6;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.reserveButton:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.reserveButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* 작은 모바일 (375px 이하) */
+@media (max-width: 375px) {
+  .mainSection,
+  .seatSection {
+    padding: 0.75rem;
+  }
+
+  .sectionTitle {
+    font-size: 0.9375rem;
+  }
+
+  .refreshButton {
+    padding: 0.3125rem;
+  }
+
+  .refreshIcon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .filterGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .favoriteButton {
+    font-size: 0.625rem;
+    padding: 0.1875rem 0.4375rem;
+  }
+}
+
+/* 태블릿 (768px 이상) */
+@media (min-width: 768px) {
+  .buttonSection {
+    padding: 1.5rem;
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    margin-bottom: -1.5rem;
+  }
+}
+
+/* 데스크톱 (1024px 이상) */
+@media (min-width: 1024px) {
+
+  .buttonSection {
+    margin-top: 2rem;
+    padding: 2rem;
+    background-color: #fdf9f8;
+    border-top: 1px solid #f0e8e6;
+    margin-left: -2rem;
+    margin-right: -2rem;
+    margin-bottom: -2rem;
+    /* flex 관련 속성 제거 */
+  }
+
+  .buttonRow {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .cancelButton {
+    flex: 1;  /* 취소하기 버튼이 가로로 확장 */
+    padding: 0.875rem 1.25rem;
+    /* width 제거 */
+  }
+
+  .reserveButton {
+    display: block;
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0.875rem 0;
+  }
+}
