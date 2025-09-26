@@ -9,7 +9,7 @@ async function upsertCertificateFromOcr(ocrDoc) {
 
   if (!uid) throw new Error('Missing uid on OCR doc');
 
-  const certRef = db.collection('certificates').doc(uid);
+  const certRef = db.collection('pregnantCertificates').doc(uid);
   const userRef = db.collection('users').doc(uid);
   const now = admin.firestore.FieldValue.serverTimestamp();
 
@@ -31,11 +31,21 @@ async function upsertCertificateFromOcr(ocrDoc) {
 
     // also reflect to users profile
     tx.set(userRef, {
-      displayName: extractedName || admin.firestore.FieldValue.delete(),
+      name: extractedName || '',
       isPregnantVerified: true,
       updatedAt: now
     }, { merge: true });
   });
+
+  // Sync with Firebase Auth displayName as well
+  if (extractedName) {
+    try {
+      await admin.auth().updateUser(uid, { displayName: extractedName });
+    } catch (error) {
+      console.error('Error updating Firebase Auth user display name:', error);
+      // This is non-fatal to the core operation, so just log it.
+    }
+  }
 }
 
 module.exports = { upsertCertificateFromOcr };

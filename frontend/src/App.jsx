@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { SubwayProvider } from './contexts/SubwayContext';
+import PrivateRoute from './components/PrivateRoute';
 
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -32,7 +33,7 @@ function App() {
               <Route path="/subway" element={<SubwayDashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route path="/ocr" element={<OCR />} />
+              <Route path="/ocr" element={<PrivateRoute><OCR /></PrivateRoute>} />
 
               {/* 예약 관련 */}
               <Route path="/reservation" element={<ReservationMenu />} />
@@ -41,8 +42,8 @@ function App() {
               <Route path="/seat-search" element={<SeatSearch />} />
 
               {/* 내 정보 관리 */}
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/password" element={<ChangePassword />} />
+              <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+              <Route path="/profile/password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
               <Route path="/reset-password" element={<ResetPassword />} /> 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

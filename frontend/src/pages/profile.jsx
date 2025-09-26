@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../config/api';
 import { updateProfile } from 'firebase/auth';
-import { User } from 'lucide-react';
+import styles from '../../styles/modules/Profile.module.css';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ export default function Profile() {
   });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate('/login');
@@ -64,7 +65,7 @@ export default function Profile() {
       if (user && form.name && user.displayName !== form.name) {
         await updateProfile(user, { displayName: form.name });
       }
-      setMsg('프로필이 저장되었습니다.');
+      setShowModal(true);
     } catch (err) {
       setMsg(err.userMessage || '저장 중 오류가 발생했습니다.');
     } finally {
@@ -72,80 +73,129 @@ export default function Profile() {
     }
   };
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FFF7F3' }}>
-      <div className="max-w-md mx-auto p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <User size={28} style={{ color: '#7D6073' }} />
-          <h1 className="text-2xl font-bold" style={{ color: '#7D6073' }}>회원 정보 수정</h1>
-        </div>
+  const closeModal = () => {
+    setShowModal(false);
+  };
 
-        <form onSubmit={onSave} className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">이름</label>
+  const handleCancel = () => {
+    if(window.confirm('변경사항이 저장되지 않습니다. 취소하시겠습니까?')) {
+      navigate('/');
+    }
+  };
+
+  const handlePasswordChange = () => {
+    navigate('/profile/password');
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <h1 className={styles.title}>
+          <svg className={styles.titleIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          회원 정보 수정
+        </h1>
+
+        <form onSubmit={onSave}>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>이름</label>
             <input
               name="name"
               value={form.name}
               onChange={onChange}
-              className="w-full border rounded-lg p-3"
+              className={styles.formInput}
               placeholder="이름을 입력하세요"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">생년월일</label>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>생년월일</label>
             <input
               name="birth"
               value={form.birth}
               onChange={onChange}
-              className="w-full border rounded-lg p-3"
+              className={styles.formInput}
               placeholder="YYYY-MM-DD"
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">휴대전화번호</label>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>휴대전화번호</label>
             <input
               name="phone"
               value={form.phone}
               onChange={onChange}
-              className="w-full border rounded-lg p-3"
+              className={styles.formInput}
               placeholder="010-1234-5678"
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">E-mail</label>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>이메일</label>
             <input
               name="email"
               value={form.email}
-              className="w-full border rounded-lg p-3 bg-gray-50"
+              className={`${styles.formInput} ${styles.disabled}`}
               readOnly
             />
           </div>
 
-          {msg && <p className="text-sm" style={{ color: msg.includes('저장') ? '#16a34a' : '#dc2626' }}>{msg}</p>}
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>비밀번호</label>
+            <div className={styles.inputWithButton}>
+              <input
+                type="password"
+                value="••••••••"
+                className={`${styles.formInput} ${styles.disabled}`}
+                disabled
+              />
+              <button
+                type="button"
+                onClick={handlePasswordChange}
+                className={styles.changeBtn}
+              >
+                비밀번호 변경
+              </button>
+            </div>
+          </div>
 
-          <div className="flex gap-2 pt-2">
+          {msg && !showModal && (
+            <p className={styles.errorMessage}>{msg}</p>
+          )}
+
+          <div className={styles.actionButtons}>
             <button
               type="button"
-              onClick={() => navigate('/profile/password')}
-              className="flex-1 border border-gray-300 rounded-lg p-3 hover:bg-gray-50"
+              onClick={handleCancel}
+              className={`${styles.actionBtn} ${styles.cancel}`}
             >
-              비밀번호 변경
+              취소
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg p-3 text-white"
-              style={{ background: saving ? '#c7c7c7' : '#E9A7B9' }}
+              className={`${styles.actionBtn} ${styles.submit}`}
             >
               {saving ? '저장 중...' : '저장하기'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* 모달 */}
+      {showModal && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalIcon}>✓</div>
+            <h3 className={styles.modalTitle}>저장 완료</h3>
+            <p className={styles.modalMessage}>저장이 완료되었습니다.</p>
+            <button className={styles.modalBtn} onClick={closeModal}>확인</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

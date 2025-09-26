@@ -89,6 +89,46 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// 프로필 수정 (PUT /me)
+router.put('/me', auth, async (req, res) => {
+  const { uid } = req.user;
+  const { name } = req.body;
+
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    return res.status(400).json({ success: false, message: '유효한 이름을 입력해주세요.' });
+  }
+
+  try {
+    // 1. Firebase Authentication displayName 업데이트
+    await admin.auth().updateUser(uid, {
+      displayName: name,
+    });
+
+    // 2. Firestore 'users' 컬렉션 수정 또는 생성 (Upsert)
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+
+    const dataToSet = {
+      name: name,
+      email: req.user.email, // 이메일도 함께 저장
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    // 문서가 존재하지 않을 경우 생성일자 추가
+    if (!userDoc.exists) {
+      dataToSet.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    await userRef.set(dataToSet, { merge: true });
+
+    res.json({ success: true, message: '프로필이 성공적으로 업데이트되었습니다.' });
+
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ success: false, message: '프로필 업데이트 중 오류가 발생했습니다.' });
+  }
+});
+
 // 간단한 인증 상태 확인 (Firebase Auth 기반 - 빠른 응답)
 router.get('/auth-status', auth, (req, res) => {
   res.json({

@@ -1,12 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Upload, CheckCircle, X, Camera } from 'lucide-react';
 import api from '../config/api';
 import { clovaPregnancyCertByFile } from '../services/ocrService';
+import { AuthContext } from '../contexts/AuthContext';
 import styles from '../../styles/modules/OCR.module.css';
 
 export default function OCR() {
   const navigate = useNavigate();
+  const { refreshUserProfile } = useContext(AuthContext);
 
   // 파일/미리보기
   const [file, setFile] = useState(null);
@@ -81,6 +83,15 @@ export default function OCR() {
       localStorage.setItem('certJustUpdated', '1');
     } catch (e) {
       setError(e.userMessage || e.message || '저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleGoHome = async () => {
+    if (saved) {
+      await refreshUserProfile();
+      navigate('/');
+    } else {
+      alert('먼저 저장을 완료해주세요.');
     }
   };
 
@@ -226,7 +237,7 @@ export default function OCR() {
                 {saved ? '다시 저장하기' : '저장하기'}
               </button>
               <button
-                onClick={() => (saved ? navigate('/') : alert('먼저 저장을 완료해주세요.'))}
+                onClick={handleGoHome}
                 className={styles.retryBtn}
               >
                 홈으로 이동

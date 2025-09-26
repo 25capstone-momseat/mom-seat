@@ -1,5 +1,5 @@
 // frontend/src/contexts/AuthContext.jsx
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import api from '../config/api';
@@ -8,7 +8,8 @@ export const AuthContext = createContext({
   user: null,
   name: '',
   loading: true,
-  setDisplayName: async (_n) => {},
+  updateName: async (_n) => {},
+  refreshUserProfile: async () => {},
 });
 
 function AuthProvider({ children }) {
@@ -16,54 +17,64 @@ function AuthProvider({ children }) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const fetchUserProfile = useCallback(async (currentUser) => {
+    if (!currentUser) {
+      setName('');
+      setLoading(false);
+      return;
+    }
+    // Prioritize backend profile as the source of truth
+    try {
+      const { data } = await api.get('/profile/me');
+      const backendName = (data?.user?.name) ? data.user.name.trim() : '';
+      if (backendName) {
+        setName(backendName);
+      } else {
+        // Fallback to displayName if backend has no name
+        setName((currentUser.displayName || '').trim());
+      }
+    } catch {
+      // Fallback to displayName on API error
+      setName((currentUser.displayName || '').trim());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      if (!u) {
-        setName('');
-        setLoading(false);
-        return;
-      }
-
-      const dn = (u.displayName || '').trim();
-      if (dn) {
-        setName(dn);
-        setLoading(false);
-        return;
-      }
-
-      // fallback to backend profile
-      try {
-        const { data } = await api.get('/profile/me');
-        setName((data && data.name) || '');
-      } catch {
-        setName('');
-      } finally {
-        setLoading(false);
-      }
+      await fetchUserProfile(u);
     });
     return () => unsub();
-  }, []);
+  }, [fetchUserProfile]);
 
-  // helper to update both Auth + Firestore
-  const setDisplayName = async (newName) => {
+  // helper to update name in local state, auth, and backend
+  const updateName = async (newName) => {
     if (!user) return;
-    await updateProfile(user, { displayName: newName });
-    try {
-      await api.post('/profile', { name: newName, email: user.email || '' });
+    
+    setName(newName); // Update local state
+    await updateProfile(user, { displayName: newName }); // Update Firebase Auth
+
+    try { // Update backend
+      await api.put('/profile/me', { name: newName });
     } catch {
-      // ignore backend failure for greeting
+      // ignore backend failure
     }
-    setName(newName);
   };
 
+  const refreshUserProfile = useCallback(async () => {
+    if (auth.currentUser) {
+      await fetchUserProfile(auth.currentUser);
+    }
+  }, [fetchUserProfile]);
+
   return (
-    <AuthContext.Provider value={{ user, name, loading, setDisplayName }}>
+    <AuthContext.Provider value={{ user, name, loading, updateName, refreshUserProfile }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// Export both ways so either `import AuthProvider ...` or `import { AuthProvider } ...` works
 export { AuthProvider };
 export default AuthProvider;

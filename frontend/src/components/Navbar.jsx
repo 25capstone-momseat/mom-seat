@@ -2,12 +2,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { useAuth } from '../hooks/useAuth';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
 import styles from '../../styles/modules/Navbar.module.css';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { refreshUserProfile } = useContext(AuthContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const onLogout = async () => {
@@ -27,13 +29,19 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   };
 
+  const handleGoHome = async (e) => {
+    e.preventDefault();
+    await refreshUserProfile();
+    navigate('/');
+  };
+
   return (
     <>
       <nav className={styles.navbar}>
         {/* 로고 */}
-        <Link to="/" className={styles.logo}>
+        <a href="/" onClick={handleGoHome} className={styles.logo}>
           맘편한자리
-        </Link>
+        </a>
 
         {/* 데스크톱 메뉴 */}
         <ul className={styles.navMenu}>
@@ -70,9 +78,9 @@ export default function Navbar() {
         <div className={styles.rightActions}>
           {/* 액션 버튼들 */}
           <div className={styles.navActions}>
-            <Link to="/" className={`${styles.navButton} ${styles.outline}`}>
+            <a href="/" onClick={handleGoHome} className={`${styles.navButton} ${styles.outline}`}>
               홈으로
-            </Link>
+            </a>
             
             {!loading && (
               user ? (

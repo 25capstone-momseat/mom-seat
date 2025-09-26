@@ -13,14 +13,17 @@ const apiClient = axios.create({
   },
 });
 
+import { auth } from '../config/firebase';
+
 // 요청 인터셉터 - 로딩 상태 관리 및 로깅
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     
-    // 인증 토큰이 있다면 헤더에 추가 (필요시)
-    const token = localStorage.getItem('authToken');
-    if (token) {
+    // Firebase에서 현재 사용자 인증 토큰 가져오기
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
       config.headers.Authorization = `Bearer ${token}`;
     }
     

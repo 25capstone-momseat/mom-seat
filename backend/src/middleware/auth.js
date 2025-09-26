@@ -2,16 +2,36 @@ const { admin } = require('../config/firebase');
 
 const authenticateToken = async (req, res, next) => {
   try {
+    /*
     // 개발 환경에서 인증 우회
     if (process.env.SKIP_AUTH === 'true') {
-      req.user = { 
-        uid: 'test_user_dev',
-        name: '테스트사용자',
-        email: 'test@example.com'
-      };
-      console.log('Development mode - using test user:', req.user);
+      const testUid = 'test_user_dev';
+      console.log('Development mode - using test user ID:', testUid);
+      
+      try {
+        const db = admin.firestore(); // Get db from admin
+        const userDoc = await db.collection('users').doc(testUid).get();
+        
+        let name = '테스트사용자';
+        if (userDoc.exists && userDoc.data().name) {
+          name = userDoc.data().name;
+        }
+
+        req.user = { 
+          uid: testUid,
+          name: name,
+          email: 'test@example.com'
+        };
+
+      } catch (e) {
+        console.error("Auth middleware: Failed to fetch test user from Firestore", e);
+        req.user = { uid: testUid, name: '테스트사용자', email: 'test@example.com' };
+      }
+      
+      console.log('Development mode - using test user data:', req.user);
       return next();
     }
+    */
     
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -29,32 +49,28 @@ const authenticateToken = async (req, res, next) => {
     // Firebase ID 토큰 검증
     const decoded = await admin.auth().verifyIdToken(token);
     
-    // 기본적으로 decoded에서 정보 사용
-    let userInfo = {
+    // Firestore 'users' 컬렉션에서 프로필 정보를 가져와 기준으로 삼음
+    const db = admin.firestore();
+    const userDocRef = db.collection('users').doc(decoded.uid);
+    const userDoc = await userDocRef.get();
+
+    let userName = ''; // 기본값
+    if (userDoc.exists) {
+      userName = userDoc.data().name || ''; // Firestore에 name이 없을 경우 대비
+    }
+
+    // req.user 객체 구성 (Firestore의 name을 유일한 이름 소스로 사용)
+    const userInfo = {
       uid: decoded.uid,
       email: decoded.email,
-      name: decoded.name,
+      name: userName, // Firestore에서 가져온 이름 사용
       emailVerified: decoded.email_verified,
     };
-    
-    // Firebase Auth에서 사용자 추가 정보 가져오기 (선택적)
-    try {
-      const userRecord = await admin.auth().getUser(decoded.uid);
-      userInfo = {
-        ...userInfo,
-        email: userInfo.email || userRecord.email,
-        name: userInfo.name || userRecord.displayName || '사용자',
-      };
-    } catch (userRecordError) {
-      console.log('Could not fetch user record, using token data:', userRecordError.message);
-      // userRecord를 가져올 수 없어도 decoded 정보로 계속 진행
-      userInfo.name = userInfo.name || '사용자';
-    }
     
     // req.user에 필요한 사용자 정보 저장
     req.user = userInfo;
     
-    console.log('Authentication successful for user:', req.user.uid);
+    console.log(`[AUTH] Request authenticated for user: ${userInfo.name} (UID: ${userInfo.uid})`);
     
     next();
   } catch (err) {

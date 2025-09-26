@@ -1,10 +1,12 @@
 // frontend/src/pages/Certificate.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import api from '../config/api';
+import { AuthContext } from '../contexts/AuthContext';
 
 export default function Certificate() {
-  const [cert, setCert] = useState(null);        // 저장된 인증서
-  const [form, setForm] = useState({             // 편집/저장 폼
+  const { user } = useContext(AuthContext); // Get user from context
+  const [cert, setCert] = useState(null);
+  const [form, setForm] = useState({
     name: '', hospital: '', issueDate: '', dueDate: ''
   });
   const [loading, setLoading] = useState(true);
@@ -12,19 +14,37 @@ export default function Certificate() {
   const fileRef = useRef(null);
 
   useEffect(() => {
-    (async () => {
+    const fetchCertificate = async () => {
+      if (!user) {
+        // If user is logged out, clear data and stop loading
+        setCert(null);
+        setForm({ name: '', hospital: '', issueDate: '', dueDate: '' });
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true); // Start loading when user changes
       try {
         const { data } = await api.get('/certificate/me');
         const c = data?.certificate || null;
         setCert(c);
-        if (c) setForm({ name: c.name || '', hospital: c.hospital || '', issueDate: c.issueDate || '', dueDate: c.dueDate || '' });
+        if (c) {
+          setForm({ name: c.name || '', hospital: c.hospital || '', issueDate: c.issueDate || '', dueDate: c.dueDate || '' });
+        } else {
+          // If no certificate for the new user, clear the form
+          setForm({ name: '', hospital: '', issueDate: '', dueDate: '' });
+        }
       } catch (_) {
-        // ignore
+        // On error, also clear data
+        setCert(null);
+        setForm({ name: '', hospital: '', issueDate: '', dueDate: '' });
       } finally {
         setLoading(false);
       }
-    })();
-  }, []);
+    };
+
+    fetchCertificate();
+  }, [user]); // Re-run when user object changes
 
   const onPickFile = () => fileRef.current?.click();
 
