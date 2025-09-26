@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "node backend/src/app.js",
-    "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev": "npm run dev:backend",
     "dev:backend": "nodemon backend/src/app.js",
     "dev:frontend": "npm run dev --prefix frontend"
   },

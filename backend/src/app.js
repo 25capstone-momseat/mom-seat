@@ -19,9 +19,10 @@ const HOST = process.env.HOST || '0.0.0.0';
 // CORS 설정 (한 번만!)
 app.use(cors({
   origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'http://localhost:5173'
+    'http://localhost:3000', // for local dev with vite
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://172.18.33.183:8000' // for the deployed app on local network
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -31,6 +32,9 @@ app.use(cors({
 // JSON 파싱 (한 번만!)
 app.use(express.json({ limit: '10mb' })); // 파일 업로드 고려
 app.use(express.urlencoded({ extended: true }));
+
+// FRONTEND 빌드 파일 서빙 (가장 먼저)
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // 요청 로깅 미들웨어 (개발 환경)
 if (process.env.NODE_ENV !== 'production') {
@@ -56,15 +60,6 @@ const seatRoute = require('./routes/seatRoute'); // 좌석 라우트 추가
 // =============================================
 // 4. Health Check 엔드포인트
 // =============================================
-app.get('/', (req, res) => {
-  res.json({
-    message: '서버가 정상 작동 중입니다',
-    version: process.env.npm_package_version || '1.0.0',
-    port: PORT,
-    env: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString(),
-  });
-});
 
 app.get('/api', (req, res) => {
   res.json({
@@ -102,6 +97,11 @@ app.use('/api/certificate', require('./routes/certificate'));
 // 인증 관련 라우터 (추가 시)
 // app.use('/api/auth', authRouter);
 // app.use('/api/user', userRouter);
+
+// SPA Fallback: API 요청이 아닌 모든 GET 요청을 프론트엔드 앱으로 전달
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+});
 
 // =============================================
 // 6. 에러 핸들링 미들웨어
