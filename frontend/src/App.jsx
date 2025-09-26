@@ -19,6 +19,7 @@ import ReservationHistory from './pages/ReservationHistory';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
 import ResetPassword from './pages/ResetPassword';
+import ActionHandler from './pages/ActionHandler';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/profile/password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
               <Route path="/reset-password" element={<ResetPassword />} /> 
+              <Route path="/action" element={<ActionHandler />} /> 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
