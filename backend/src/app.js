@@ -10,6 +10,7 @@ const cors = require('cors');
 // =============================================
 const app = express();
 const PORT = process.env.PORT || 8000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // =============================================
 // 2. 미들웨어 설정 (순서 중요!)
@@ -147,8 +148,9 @@ const server = http.createServer(app);
 setupWebSocket(server);
 
 if (require.main === module) {
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log('=================================');
+    console.log(`서버 실행 중: http://0.0.0.0:${PORT}`);
     console.log(`서버 실행 중: http://localhost:${PORT}`);
     console.log(`웹소켓 서버도 함께 실행 중입니다.`);
     console.log(`Health Check: http://localhost:${PORT}/health`);
