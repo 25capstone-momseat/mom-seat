@@ -29,20 +29,8 @@ const SeatSearch = () => {
     setShowTrainDropdown(false);
   };
 
-  const handleReservation = () => {
-    console.log('예약하기 클릭', selection.selectedTrain);
-    // navigate 로직 추가 필요
-  };
-
   return (
     <div className={styles.container}>
-      {/* 헤더 */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>
-          <span className={styles.titleMam}>맘</span>
-          <span className={styles.titleRest}>편한자리</span>
-        </h1>
-      </div>
 
       {/* 실시간 좌석 조회 섹션 */}
       <div className={styles.searchSection}>
@@ -182,54 +170,10 @@ const SeatSearch = () => {
               {new Date().toLocaleDateString('ko-KR')} | {new Date().toLocaleTimeString('ko-KR')} | {selection.selectedStation}
             </div>
 
-            {/* 좌석 통계 */}
-            {seat.occupancyInfo && (
-              <div className={styles.seatStats}>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>{seat.totalSeats}</div>
-                  <div className={styles.statLabel}>총 좌석</div>
-                </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>{seat.occupancyInfo.occupied}</div>
-                  <div className={styles.statLabel}>사용 중</div>
-                </div>
-                <div className={styles.statItem}>
-                  <div className={styles.statNumber}>{seat.availableSeats}</div>
-                  <div className={styles.statLabel}>사용가능한 좌석</div>
-                </div>
-              </div>
-            )}
-
             {/* SeatMap 컴포넌트가 들어갈 자리 */}
-            <div className={styles.seatMapContainer}>
-              <SeatMap />
-            </div>
+            <SeatMap />
 
-            {/* 범례 */}
-            <div className={styles.legend}>
-              <div className={styles.legendItem}>
-                <div className={`${styles.legendColor} ${styles.available}`}></div>
-                <span>예약 가능</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={`${styles.legendColor} ${styles.occupied}`}></div>
-                <span>사용중인 좌석</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={`${styles.legendColor} ${styles.selected}`}></div>
-                <span>예약된 좌석</span>
-              </div>
-            </div>
           </div>
-
-          {/* 예약하기 버튼 */}
-          <button
-            onClick={handleReservation}
-            disabled={seat.availableSeats === 0}
-            className={styles.reserveButton}
-          >
-            {seat.availableSeats > 0 ? '예약하기' : '예약 가능한 좌석 없음'}
-          </button>
         </div>
       )}
 

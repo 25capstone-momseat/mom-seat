@@ -21,6 +21,18 @@ function resolveOccupied({ status, occupied }) {
 }
 
 module.exports = {
+  async getAllSeats(req, res) {
+    try {
+      const db = admin.firestore();
+      const seatsSnapshot = await db.collection(COLL).get();
+      const seats = seatsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.status(200).json({ success: true, data: seats });
+    } catch (err) {
+      console.error('[SEAT/GET_ALL][ERROR]', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
   /**
    * PATCH /api/seats/:seatId/status
    * Body: { status: "occupied"|"vacant" } OR { occupied: true|false }

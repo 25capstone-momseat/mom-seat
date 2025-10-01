@@ -28,7 +28,8 @@ class SubwayController {
 
         // 캐시된 데이터에 필터링 및 그룹화 적용
         if (lineNumber) {
-          arrivalData = arrivalData.filter(train => train.lineName === lineNumber || train.lineNumber === lineNumber);
+          console.log(`[Controller] 호선 필터링 (캐시): ${lineNumber}`);
+          arrivalData = arrivalData.filter(train => train.lineName.startsWith(lineNumber));
         }
         const groupedData = this.groupAndSortTrains(arrivalData);
 
@@ -62,7 +63,7 @@ class SubwayController {
       // 특정 호선 필터링
       if (lineNumber) {
         console.log(`[Controller] 호선 필터링: ${lineNumber}`);
-        arrivalData = arrivalData.filter(train => train.lineName === lineNumber || train.lineNumber === lineNumber);
+        arrivalData = arrivalData.filter(train => train.lineName.startsWith(lineNumber));
       }
 
       // 방향별로 그룹화 및 정렬

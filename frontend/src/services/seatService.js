@@ -1,29 +1,11 @@
-import api from '../config/api';
+import apiClient from './apiClient';
 
-export const seatService = {
-  // 좌석 조회
-  getAvailableSeats: async (trainId, carNumber) => {
-    const response = await api.get(`/seats/available`, {
-      params: { trainId, carNumber }
-    });
-    return response.data;
-  },
-
-  // 좌석 예약
-  reserveSeat: async (seatData) => {
-    const response = await api.post('/seats/reserve', seatData);
-    return response.data;
-  },
-
-  // 예약 취소
-  cancelReservation: async (reservationId) => {
-    const response = await api.delete(`/seats/reservation/${reservationId}`);
-    return response.data;
-  },
-
-  // 내 예약 조회
-  getMyReservations: async () => {
-    const response = await api.get('/seats/my-reservations');
-    return response.data;
+export const getSeats = async () => {
+  try {
+    const response = await apiClient.get('/seats');
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching seats:', error);
+    throw error;
   }
 };

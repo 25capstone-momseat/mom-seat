@@ -86,3 +86,66 @@
   font-size: 20px;
   font-weight: 500;
 }
+
+.cancelable {
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.cancelable:hover {
+  background-color: #fafafa;
+}
+
+/* Empty State Styles */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  min-height: 400px;
+}
+
+.emptyIcon {
+  width: 120px;
+  height: 120px;
+  background-color: #FAD0C4;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.emptyIcon svg {
+  color: #7D6073;
+}
+
+.emptyText {
+  font-size: 18px;
+  font-weight: 500;
+  color: #7D6073;
+  margin: 0 0 40px 0;
+  text-align: center;
+}
+
+.reservationButton {
+  padding: 14px 28px;
+  background-color: #7D6073;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reservationButton:hover {
+  background-color: #6B5263;
+  transform: translateY(-1px);
+}
+
+.reservationButton:active {
+  transform: translateY(0);
+}

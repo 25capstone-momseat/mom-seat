@@ -24,7 +24,9 @@ export const subwayService = {
       
       // 호선 필터링 쿼리 파라미터 추가
       if (lineNumber) {
-        url += `?lineNumber=${encodeURIComponent(lineNumber)}`;
+        const match = lineNumber.match(/(\d+)/);
+        const lineQueryParam = match ? match[1] : lineNumber;
+        url += `?lineNumber=${encodeURIComponent(lineQueryParam)}`;
       }
 
       const response = await api.get(url); // api 인스턴스 사용

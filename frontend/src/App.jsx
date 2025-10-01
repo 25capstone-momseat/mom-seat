@@ -28,8 +28,7 @@ function App() {
         <Router>
         <div className="App">
           <Navbar />
-          <main className="main-content">
-            <Routes>
+          <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/subway" element={<SubwayDashboard />} />
               <Route path="/login" element={<Login />} />
@@ -39,7 +38,7 @@ function App() {
               {/* 예약 관련 */}
               <Route path="/reservation" element={<ReservationMenu />} />
               <Route path="/reservation/seats" element={<SeatReservation />} />
-              <Route path="/reservation-history" element={<ReservationHistory />} />
+              <Route path="/reservation-history" element={<PrivateRoute><ReservationHistory /></PrivateRoute>} />
               <Route path="/seat-search" element={<SeatSearch />} />
 
               {/* 내 정보 관리 */}
@@ -49,7 +48,6 @@ function App() {
               <Route path="/action" element={<ActionHandler />} /> 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </main>
         </div>
       </Router>
       </SubwayProvider>

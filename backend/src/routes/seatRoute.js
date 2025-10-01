@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const seatController = require('../controllers/seatController');
 
+// 모든 좌석 정보 조회
+router.get('/', seatController.getAllSeats);
+
 // 하드웨어(센서)에서 좌석 상태를 업데이트하기 위한 라우트
 // PATCH /api/seats/:seatId/status
 router.patch('/:seatId/status', seatController.updateSeatStatus);

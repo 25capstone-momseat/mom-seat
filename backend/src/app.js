@@ -22,6 +22,7 @@ app.use(cors({
     'http://localhost:3000', // for local dev with vite
     'http://localhost:3001',
     'http://localhost:5173',
+    'http://192.0.0.2:3000', // for local dev with --host flag
     'http://172.18.33.183:8000' // for the deployed app on local network
   ],
   credentials: true,
