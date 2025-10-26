@@ -22,13 +22,14 @@ const createReservation = async (req, res) => {
 
       const seat = seatSnap.data();
 
-      if (seat.reserved === true || seat.status !== 'vacant') {
-        throw new Error('409/이미 예약된 좌석입니다.');
+      // 조건: status가 'vacant'이고 reserved가 false일 때만 예약 가능
+      if (seat.status !== 'vacant' || seat.reserved === true) {
+        throw new Error('409/이미 예약된 좌석이거나 이용 중인 좌석입니다.');
       }
 
-      // 좌석 예약 상태로 변경
+      // 좌석 예약 상태로 변경: reserved와 reservedBy만 업데이트
       transaction.update(seatRef, {
-        reserved: true, // reserved 필드만 true로 설정
+        reserved: true,
         reservedBy: userId,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
@@ -90,7 +91,7 @@ const cancelReservation = async (req, res) => {
         throw new Error('409/이미 이용 완료된 예약은 취소할 수 없습니다.');
       }
 
-      // 좌석의 reserved 상태를 false로 변경
+      // 좌석의 reserved 상태만 변경
       const seatRef = db.collection('seats').doc(reservation.seatId);
       transaction.update(seatRef, {
         reserved: false,

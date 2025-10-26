@@ -30,14 +30,15 @@ const SeatMap = () => {
       }
       
       // 데이터 정규화 - seatNumber를 숫자로 변환
+      // isPregnantSeat는 백엔드 데이터를 그대로 사용
       const normalizedSeats = seatsData.map(seat => ({
         id: seat.id || seat._id,
         row: seat.row || 'A',
         number: typeof seat.seatNumber === 'number' 
           ? seat.seatNumber 
           : parseInt(seat.seatNumber) || parseInt(seat.number) || 1,
-        status: seat.status, // 'available' 대신 'vacant'를 그대로 사용
-        isPregnantSeat: seat.isPregnantSeat || false
+        status: seat.status || 'vacant',
+        isPregnantSeat: seat.isPregnantSeat || false  // DB에서 오는 값 그대로 사용
       }));
       
       // 정렬
@@ -48,6 +49,8 @@ const SeatMap = () => {
       });
       
       console.log('✅ 최종 좌석 데이터:', sortedSeats);
+      console.log('   임산부석 위치:', sortedSeats.filter(s => s.isPregnantSeat).map(s => `${s.row}${s.number}`).join(', '));
+      
       setSeats(sortedSeats);
     } catch (error) {
       console.error('Failed to fetch seats:', error);
@@ -136,7 +139,7 @@ const SeatMap = () => {
       return;
     }
 
-    if (seat.status !== 'vacant') { // 'available' 대신 'vacant'
+    if (seat.status !== 'vacant') {
       alert('이미 사용 중이거나 예약된 좌석입니다.');
       return;
     }
@@ -148,7 +151,7 @@ const SeatMap = () => {
       // 낙관적 업데이트
       setSeats(prevSeats =>
         prevSeats.map(s =>
-          s.id === seat.id ? { ...s, status: 'reserved' } : s
+          s.id === seat.id ? { ...s, status: 'occupied' } : s
         )
       );
       
@@ -161,18 +164,18 @@ const SeatMap = () => {
 
   const handleCloseModal = () => {
     setModalInfo({ isOpen: false, seat: null });
-    fetchSeats(); // 모달을 닫을 때 좌석 상태를 최신으로 동기화합니다.
+    fetchSeats();
   };
 
   const seatStats = {
-    total: seats.filter(s => s.isPregnantSeat).length, // 임산부석만 카운트
+    total: seats.filter(s => s.isPregnantSeat).length,
     occupied: seats.filter(s => s.isPregnantSeat && s.status === 'occupied').length,
-    available: seats.filter(s => s.isPregnantSeat && s.status === 'vacant').length, // 'available' 대신 'vacant'
-    reserved: seats.filter(s => s.isPregnantSeat && s.status === 'reserved').length,
+    available: seats.filter(s => s.isPregnantSeat && s.status === 'vacant').length,
+    reserved: seats.filter(s => s.isPregnantSeat && s.status === 'occupied').length,
   };
 
   const SubwaySeat = ({ seat }) => {
-    const isClickable = seat.isPregnantSeat && seat.status === 'vacant'; // 'available' 대신 'vacant'
+    const isClickable = seat.isPregnantSeat && seat.status === 'vacant';
     
     // 상태별 클래스 결정
     let statusClass = '';
@@ -259,7 +262,6 @@ const SeatMap = () => {
         </div>
         
         <div className={styles.subwaySeatsContainer}>
-          
           <div className={styles.gridContainer}>
             {rows.map(row => (
               <div key={row} className={styles.row}>
@@ -283,7 +285,7 @@ const SeatMap = () => {
             <span className={styles.legendLabel}>예약 가능</span>
           </div>
           <div className={styles.legendItem}>
-            <div className={`${styles.legendColorBox} ${styles.statusReserved}`} />
+            <div className={`${styles.legendColorBox} ${styles.statusOccupied}`} />
             <span className={styles.legendLabel}>예약됨</span>
           </div>
           <div className={styles.legendItem}>

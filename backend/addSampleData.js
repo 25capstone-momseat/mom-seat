@@ -8,16 +8,16 @@ console.log('Firestore DB 인스턴스를 성공적으로 가져왔습니다.');
 // A열: 왼쪽 좌석들, B열: 오른쪽 좌석들
 const sampleSeats = [
   // 왼쪽 줄 (A열) - 1, 4번만 임산부석
-  { id: 'SEAT_A1', row: 'A', seatNumber: 1, status: 'available', isPregnantSeat: true },
-  { id: 'SEAT_A2', row: 'A', seatNumber: 2, status: 'available', isPregnantSeat: false },
-  { id: 'SEAT_A3', row: 'A', seatNumber: 3, status: 'available', isPregnantSeat: false },
-  { id: 'SEAT_A4', row: 'A', seatNumber: 4, status: 'available', isPregnantSeat: true },
+  { id: 'SEAT_A1', row: 'A', seatNumber: 1, status: 'vacant', isPregnantSeat: true },
+  { id: 'SEAT_A2', row: 'A', seatNumber: 2, status: 'vacant', isPregnantSeat: false },
+  { id: 'SEAT_A3', row: 'A', seatNumber: 3, status: 'vacant', isPregnantSeat: false },
+  { id: 'SEAT_A4', row: 'A', seatNumber: 4, status: 'vacant', isPregnantSeat: true },
   
   // 오른쪽 줄 (B열) - 1, 4번만 임산부석
-  { id: 'SEAT_B1', row: 'B', seatNumber: 1, status: 'available', isPregnantSeat: true },
-  { id: 'SEAT_B2', row: 'B', seatNumber: 2, status: 'available', isPregnantSeat: false },
-  { id: 'SEAT_B3', row: 'B', seatNumber: 3, status: 'available', isPregnantSeat: false },
-  { id: 'SEAT_B4', row: 'B', seatNumber: 4, status: 'available', isPregnantSeat: true },
+  { id: 'SEAT_B1', row: 'B', seatNumber: 1, status: 'vacant', isPregnantSeat: true },
+  { id: 'SEAT_B2', row: 'B', seatNumber: 2, status: 'vacant', isPregnantSeat: false },
+  { id: 'SEAT_B3', row: 'B', seatNumber: 3, status: 'vacant', isPregnantSeat: false },
+  { id: 'SEAT_B4', row: 'B', seatNumber: 4, status: 'vacant', isPregnantSeat: true },
 ];
 
 const sampleUser = {
